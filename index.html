@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAQS - Qualité de l'air</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+:root{--n:#0b0d0c;--g:#171c19;--g2:#252d28;--v:#22c55e;--vf:#15803d;--t:#e7efe9;--m:#8fa396}
+*{box-sizing:border-box}
+body{margin:0;background:var(--n);color:var(--t);font-family:system-ui,sans-serif;line-height:1.5}
+header{position:sticky;top:0;z-index:5;background:#0b0d0ccc;backdrop-filter:blur(8px);border-bottom:1px solid var(--g2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 20px}
+.logo{font-weight:800;font-size:1.3rem;letter-spacing:2px;color:var(--v)}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav a{color:var(--m);text-decoration:none;padding:8px 14px;border-radius:8px;font-weight:600;font-size:.95rem}
+nav a:hover{background:var(--g);color:var(--t)}
+nav a.on{background:var(--v);color:#04130a}
+main{max-width:980px;margin:0 auto;padding:20px}
+.page{display:none}.page.on{display:block}
+h1{font-size:2rem;margin:.2em 0}h2{margin:0 0 10px;font-size:1.15rem}
+h1 span,h2 span{color:var(--v)}
+.hero{background:linear-gradient(135deg,var(--g),#0f1a13);border:1px solid var(--g2);border-left:4px solid var(--v);border-radius:12px;padding:24px;margin-bottom:16px}
+.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.carte{background:var(--g);border:1px solid var(--g2);border-radius:12px;padding:16px;margin:14px 0}
+.grille .carte{margin:0}
+.muted{color:var(--m)}.note{color:#d9a400;font-size:.85rem}
+label.l{display:block;font-size:.85rem;color:var(--m);margin:8px 0 4px}
+input,select{background:var(--n);color:var(--t);border:1px solid var(--g2);border-radius:8px;padding:9px;font:inherit;width:100%}
+input:focus,select:focus{outline:2px solid var(--v)}
+select{width:auto}
+button{background:var(--v);color:#04130a;border:0;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer}
+button:hover{background:#4ade80}button:disabled{opacity:.5}
+button.s{background:var(--g2);color:var(--t);padding:6px 12px;font-weight:600}
+.ligne{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.ligne>div{flex:1;min-width:180px}
+#valeurs{display:flex;flex-wrap:wrap;gap:28px}
+.valeur{color:var(--m);font-size:.9rem}.valeur b{display:block;font-size:1.9rem;color:var(--v)}
+#etat,.st{color:var(--m);font-size:.9rem;margin:8px 0}.err{color:#f87171!important}.ok{color:var(--v)!important}
+.filtres{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;font-size:.9rem}
+.filtres label{display:flex;gap:5px;align-items:center;cursor:pointer}
+.filtres input{width:auto}
+#apercu{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:10px}
+#apercu a{color:var(--v)}
+#apercu img{width:100%;border-radius:8px;border:1px solid var(--g2)}
+footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">CAQS</div>
+ <nav>
+  <a href="#projet">Projet CAQS</a><a href="#nous">Qui sommes-nous</a><a href="#donnees">Données</a><a href="#bilan">Bilan</a>
+ </nav>
+</header>
+<main>
+
+<section id="projet" class="page">
+ <div class="hero">
+  <h1>Projet <span>CAQS</span></h1>
+  <p>Une station qui mesure la qualité de l'air et l'affiche en direct sur un écran LED, avec toutes les mesures consultables sur ce site.</p>
+  <p class="note">À compléter : ce que signifie CAQS et le contexte du projet.</p>
+ </div>
+ <div class="grille">
+  <div class="carte"><h2><span>●</span> Particules</h2><p class="muted">Un capteur NextPM mesure les PM1, PM2.5 et PM10, ainsi que la température et l'humidité.</p></div>
+  <div class="carte"><h2><span>●</span> CO₂</h2><p class="muted">Un capteur MH-Z19B suit la concentration en CO₂ de la pièce, en ppm.</p></div>
+  <div class="carte"><h2><span>●</span> Écran LED</h2><p class="muted">Une matrice 64 × 32 affiche chaque mesure en vert, orange ou rouge selon son niveau.</p></div>
+  <div class="carte"><h2><span>●</span> Données en ligne</h2><p class="muted">La carte envoie ses mesures chaque minute au serveur AirCarto. Ce site les affiche sous forme de courbes.</p></div>
+ </div>
+</section>
+
+<section id="nous" class="page">
+ <div class="hero"><h1>Qui <span>sommes-nous</span> ?</h1>
+  <p>Équipe <b>Pillot LeKriebs</b>, BUT Mesures Physiques, IUT Aix-Marseille.</p>
+  <p class="note">À compléter : prénoms, rôles de chacun, photo de l'équipe.</p></div>
+ <div class="grille">
+  <div class="carte"><h2>Membre 1</h2><p class="muted">Rôle et présentation à compléter.</p></div>
+  <div class="carte"><h2>Membre 2</h2><p class="muted">Rôle et présentation à compléter.</p></div>
+ </div>
+</section>
+
+<section id="donnees" class="page">
+ <h1>Les <span>données</span></h1>
+ <p>Période : <select id="periode">
+  <option value="-1h">Dernière heure</option><option value="-24h" selected>24 dernières heures</option><option value="-7d">7 derniers jours</option>
+ </select></p>
+ <p id="etat">Chargement en cours...</p>
+ <div class="carte"><h2>Dernière mesure</h2><div id="valeurs">En attente des données...</div></div>
+ <div class="carte"><h2>Particules (µg/m³)</h2>
+  <div class="filtres"><label><input type="checkbox" class="f-pm" value="pm1" checked>PM1</label><label><input type="checkbox" class="f-pm" value="pm25" checked>PM2.5</label><label><input type="checkbox" class="f-pm" value="pm10" checked>PM10</label></div>
+  <canvas id="g-pm"></canvas></div>
+ <div class="carte"><h2>Température (°C) et humidité (%)</h2>
+  <div class="filtres"><label><input type="checkbox" class="f-me" value="temp" checked>Température</label><label><input type="checkbox" class="f-me" value="hum" checked>Humidité</label></div>
+  <canvas id="g-me"></canvas></div>
+ <div class="carte"><h2>CO₂ (ppm)</h2><canvas id="g-co2"></canvas></div>
+</section>
+
+<section id="bilan" class="page">
+ <h1>Le <span>bilan</span></h1>
+
+ <div class="carte"><h2>Envoyer un bilan par e-mail</h2>
+  <p class="muted">Choisissez une plage de temps : le site crée 3 images (particules, météo, CO₂) et un fichier CSV avec toutes les données. Le bilan est généré dans votre navigateur à partir des données du serveur AirCarto.</p>
+  <div class="ligne">
+   <div><label class="l">Début</label><input type="datetime-local" id="dDeb"></div>
+   <div><label class="l">Fin</label><input type="datetime-local" id="dFin"></div>
+  </div>
+  <p><button class="s" data-h="1">1 h</button> <button class="s" data-h="24">24 h</button> <button class="s" data-h="168">7 jours</button> <button class="s" data-h="720">30 jours</button></p>
+  <label class="l">Adresse e-mail du destinataire</label><input type="email" id="mail" placeholder="nom@exemple.fr">
+  <br><br><button id="btnBilan">Envoyer le bilan par e-mail</button><p id="stBilan" class="st"></p>
+  <div id="apercu"></div>
+ </div>
+</section>
+
+</main>
+<footer>CAQS · IUT Aix-Marseille · BUT Mesures Physiques</footer>
+
+<script>
+// ---------- RÉGLAGES ----------
+const CLE = "1fdf17de86d313e5f49e03ab36f0360b";                          // Clé de groupe (32 caractères). Visible dans le code source de la page !
+const DEVICE_ID = "5C:01:3B:F1:53:C8";
+const MOYENNE = { "-24h": "1m", "-7d": "5m" };
+
+const CHAMPS = {
+ pm1:["PM1","µg/m³","#22c55e"], pm25:["PM2.5","µg/m³","#f59e0b"], pm10:["PM10","µg/m³","#ef4444"],
+ temp:["Température","°C","#f97316"], hum:["Humidité","%","#38bdf8"], co2:["CO₂","ppm","#a3e635"],
+};
+Chart.defaults.color = "#8fa396";
+Chart.defaults.borderColor = "rgba(255,255,255,.08)";
+const $ = id => document.getElementById(id);
+const graphes = {};
+let points = [];
+
+// ---------- Navigation ----------
+function route() {
+ const h = (location.hash || "#projet").slice(1);
+ const p = ["projet","nous","donnees","bilan"].includes(h) ? h : "projet";
+ document.querySelectorAll(".page").forEach(s => s.classList.toggle("on", s.id === p));
+ document.querySelectorAll("nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + p));
+ if (p === "donnees") dessinerTout();
+}
+addEventListener("hashchange", route);
+
+// ---------- Données ----------
+function parseDate(t) {
+ if (typeof t === "number") return new Date(t * 1000);
+ if (typeof t === "string" && t.trim() !== "" && !isNaN(t)) return new Date(Number(t) * 1000);
+ return new Date(t);
+}
+const coches = c => [...document.querySelectorAll("." + c + ":checked")].map(x => x.value);
+
+async function appelData(params) {
+ if (CLE) params.set("key", CLE);
+ if (DEVICE_ID) params.set("device_id", DEVICE_ID);
+ const r = await fetch("https://api.aircarto.fr/iut-amu/data?" + params);
+ if (!r.ok) throw new Error("Erreur HTTP : " + r.status);
+ const j = await r.json();
+ if (!j.ok) throw new Error(j.message || "Erreur renvoyée par l'API");
+ return (j.points || []).sort((a, b) => parseDate(a.time) - parseDate(b.time));
+}
+
+function options(titre) {
+ return { responsive: true, animation: false, interaction: { mode: "index", intersect: false },
+  plugins: titre ? { title: { display: true, text: titre, color: "#e7efe9" } } : {},
+  scales: { x: { type: "time", time: { tooltipFormat: "dd/MM/yyyy HH:mm", displayFormats: { minute: "HH:mm", hour: "dd/MM HH:mm", day: "dd/MM" } }, ticks: { maxTicksLimit: 8, autoSkip: true } } } };
+}
+function courbes(pts, champs) {
+ return champs.map(c => ({ label: CHAMPS[c][0], borderColor: CHAMPS[c][2], backgroundColor: CHAMPS[c][2],
+  data: pts.map(p => ({ x: parseDate(p.time), y: p[c] ?? null })),
+  pointRadius: pts.length < 30 ? 4 : 2, borderWidth: 2, spanGaps: true }));
+}
+function graphe(id, pts, champs) {
+ if (graphes[id]) graphes[id].destroy();
+ graphes[id] = new Chart($(id), { type: "line", data: { datasets: courbes(pts, champs) }, options: options() });
+}
+function dessinerTout() {
+ if (!points.length || !$("donnees").classList.contains("on")) return;
+ graphe("g-pm", points, coches("f-pm"));
+ graphe("g-me", points, coches("f-me"));
+ graphe("g-co2", points, ["co2"]);
+}
+function afficherDerniere() {
+ if (!points.length) return;
+ const d = points[points.length - 1], sel = [...coches("f-pm"), ...coches("f-me"), "co2"];
+ const h = Object.keys(CHAMPS).filter(c => d[c] != null && sel.includes(c)).map(c =>
+  `<div class="valeur">${CHAMPS[c][0]}<b>${Number(d[c]).toFixed(c === "co2" ? 0 : 1)} ${CHAMPS[c][1]}</b></div>`);
+ $("valeurs").innerHTML = h.length ? h.join("") : "Aucun champ sélectionné";
+}
+async function rafraichir() {
+ const per = $("periode").value, p = new URLSearchParams({ start: per });
+ if (MOYENNE[per]) p.set("freq", MOYENNE[per]);
+ try {
+  points = await appelData(p);
+  if (!points.length) { $("etat").className = ""; $("etat").textContent = "Aucune mesure sur cette période."; $("valeurs").textContent = "Aucune donnée disponible"; return; }
+  afficherDerniere(); dessinerTout();
+  const date = parseDate(points[points.length - 1].time).toLocaleString("fr-FR", { timeZone: "Europe/Paris" });
+  $("etat").className = ""; $("etat").textContent = `${points.length} points. Dernière mesure : ${date}.`;
+ } catch (e) { $("etat").className = "err"; $("etat").textContent = "Erreur de chargement : " + e.message; }
+}
+$("periode").onchange = rafraichir;
+document.querySelectorAll("input[type=checkbox]").forEach(c => c.onchange = () => { dessinerTout(); afficherDerniere(); });
+
+// ---------- Bilan par e-mail ----------
+const locale = d => new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+function plage(heures) { const f = new Date(); $("dFin").value = locale(f); $("dDeb").value = locale(new Date(f - heures * 36e5)); }
+document.querySelectorAll("[data-h]").forEach(b => b.onclick = () => plage(+b.dataset.h));
+plage(24);
+
+function versCsv(pts) {
+ const cles = [...new Set(pts.flatMap(p => Object.keys(p)))].filter(k => k !== "time");
+ const num = v => v == null ? "" : String(v).replace(".", ",");
+ const lignes = pts.map(p => [parseDate(p.time).toLocaleString("fr-FR", { timeZone: "Europe/Paris" }), ...cles.map(k => num(p[k]))].join(";"));
+ return "\uFEFF" + [["date_heure", ...cles].join(";"), ...lignes].join("\r\n");
+}
+function png(pts, champs, titre) {
+ const c = document.createElement("canvas"); c.width = 900; c.height = 400;
+ const o = options(titre); o.responsive = false; o.devicePixelRatio = 1;
+ const fond = { id: "fond", beforeDraw: ch => { ch.ctx.save(); ch.ctx.fillStyle = "#0b0d0c"; ch.ctx.fillRect(0, 0, ch.width, ch.height); ch.ctx.restore(); } };
+ const ch = new Chart(c, { type: "line", data: { datasets: courbes(pts, champs) }, options: o, plugins: [fond] });
+ const url = c.toDataURL("image/png"); ch.destroy(); return url;
+}
+
+async function creerBilan() {
+ const st = $("stBilan"), mail = $("mail").value.trim();
+ const d = new Date($("dDeb").value), f = new Date($("dFin").value);
+ const fin = (cls, t) => { st.className = "st " + cls; st.textContent = t; $("btnBilan").disabled = false; };
+ if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return fin("err", "Adresse e-mail invalide.");
+ if (isNaN(d) || isNaN(f) || d >= f) return fin("err", "Plage de temps invalide : le début doit précéder la fin.");
+ if (f - d > 31 * 864e5) return fin("err", "La plage ne peut pas dépasser 31 jours.");
+ $("btnBilan").disabled = true; st.className = "st"; st.textContent = "Récupération des données...";
+ try {
+  const p = new URLSearchParams({ start: d.toISOString(), end: f.toISOString() });
+  if (f - d > 7 * 864e5) p.set("freq", "30m"); else if (f - d > 864e5) p.set("freq", "5m");
+  const pts = await appelData(p);
+  if (!pts.length) return fin("err", "Aucune mesure sur cette plage.");
+
+  const images = [
+   { name: "courbe_particules.png", data: png(pts, ["pm1", "pm25", "pm10"], "Particules (µg/m³)") },
+   { name: "courbe_meteo.png", data: png(pts, ["temp", "hum"], "Température (°C) et humidité (%)") },
+   { name: "courbe_co2.png", data: png(pts, ["co2"], "CO₂ (ppm)") },
+  ];
+  const csv = new Blob([versCsv(pts)], { type: "text/csv;charset=utf-8" });
+  const csvUrl = URL.createObjectURL(csv);
+  $("apercu").innerHTML = images.map(i => `<div><img src="${i.data}" alt="${i.name}"><p><a href="${i.data}" download="${i.name}">Télécharger ${i.name}</a></p></div>`).join("")
+   + `<div><p><a href="${csvUrl}" download="donnees_caqs.csv"><b>Télécharger le fichier CSV</b></a> (${pts.length} mesures)</p></div>`;
+  const sujet = `Bilan CAQS du ${d.toLocaleDateString("fr-FR")} au ${f.toLocaleDateString("fr-FR")}`;
+  const fichiers = [...await Promise.all(images.map(async i => new File([await (await fetch(i.data)).blob()], i.name, { type: "image/png" }))),
+   new File([csv], "donnees_caqs.csv", { type: "text/csv" })];
+  if (navigator.canShare && navigator.canShare({ files: fichiers })) {
+   try {
+    await navigator.share({ files: fichiers, title: sujet, text: `Bilan CAQS pour ${mail}` });
+    return fin("ok", `Choisissez votre messagerie : les 4 fichiers sont joints. Saisissez ${mail} comme destinataire.`);
+   } catch (e) { if (e.name === "AbortError") return fin("", "Envoi annulé."); }
+  }
+  location.href = `mailto:${mail}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent("Bonjour,\n\nCi-joint le bilan CAQS : 3 courbes (PNG) et toutes les données (CSV).\n")}`;
+  fin("ok", "Mail pré-rempli ouvert : joignez les 4 fichiers (liens de téléchargement ci-dessus), puis envoyez-le.");
+ } catch (e) { fin("err", "Erreur : " + e.message); }
+}
+$("btnBilan").onclick = creerBilan;
+
+route();
+rafraichir();
+setInterval(() => { if (location.hash === "#donnees") rafraichir(); }, 15000);
+</script>
+</body>
+</html>
