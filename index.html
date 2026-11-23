@@ -148,7 +148,7 @@ function parseDate(t) {
 const coches = c => [...document.querySelectorAll("." + c + ":checked")].map(x => x.value);
 
 async function appelData(params) {
- if (CLE) params.set("key", CLE);
+ params.set("key", CLE);
  if (DEVICE_ID) params.set("device_id", DEVICE_ID);
  const r = await fetch("https://api.aircarto.fr/iut-amu/data?" + params);
  if (!r.ok) throw new Error("Erreur HTTP : " + r.status);
@@ -189,7 +189,7 @@ async function rafraichir() {
  if (MOYENNE[per]) p.set("freq", MOYENNE[per]);
  try {
   points = await appelData(p);
-  if (!points.length) { $("etat").className = ""; $("etat").textContent = "Aucune mesure sur cette période."; $("valeurs").textContent = "Aucune donnée disponible"; return; }
+  if (!points.length) { $("etat").textContent = "Aucune mesure sur cette période."; $("valeurs").textContent = "Aucune donnée disponible"; return; }
   afficherDerniere(); dessinerTout();
   const date = parseDate(points[points.length - 1].time).toLocaleString("fr-FR", { timeZone: "Europe/Paris" });
   $("etat").className = ""; $("etat").textContent = `${points.length} points. Dernière mesure : ${date}.`;
@@ -205,11 +205,47 @@ document.querySelectorAll("[data-h]").forEach(b => b.onclick = () => plage(+b.da
 plage(24);
 
 function versCsv(pts) {
- const cles = [...new Set(pts.flatMap(p => Object.keys(p)))].filter(k => k !== "time");
- const num = v => v == null ? "" : String(v).replace(".", ",");
- const lignes = pts.map(p => [parseDate(p.time).toLocaleString("fr-FR", { timeZone: "Europe/Paris" }), ...cles.map(k => num(p[k]))].join(";"));
- return "\uFEFF" + [["date_heure", ...cles].join(";"), ...lignes].join("\r\n");
+ const ordrePrioritaire = ["pm1", "pm25", "pm10", "co2", "temp", "hum"];
+ const toutesCles = [...new Set(pts.flatMap(p => Object.keys(p)))].filter(k => k !== "time");
+ const cles = [
+  ...ordrePrioritaire.filter(k => toutesCles.includes(k)),
+  ...toutesCles.filter(k => !ordrePrioritaire.includes(k))
+ ];
+
+ const formaterValeur = (cle, val) => {
+  if (val == null || val === "") return "";
+  const n = Number(val);
+  if (Number.isNaN(n)) return String(val).replace(/;/g, ",");
+  const arrondi = cle === "co2" ? n.toFixed(0) : n.toFixed(1);
+  return arrondi.replace(".", ",");
+ };
+
+ const enTete = ["date", "heure", ...cles].join(";");
+
+ const lignes = pts.map(p => {
+  const dt = parseDate(p.time);
+  const dateStr = dt.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
+  const heureStr = dt.toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const vals = cles.map(k => formaterValeur(k, p[k]));
+  return [dateStr, heureStr, ...vals].join(";");
+ });
+
+ const statsLigne = (label, fn) => {
+  const vals = cles.map(k => {
+   const nums = pts.map(p => Number(p[k])).filter(v => !Number.isNaN(v) && p[k] != null);
+   if (!nums.length) return "";
+   return formaterValeur(k, fn(nums));
+  });
+  return [label, "", ...vals].join(";");
+ };
+
+ const ligneMoy = statsLigne("MOYENNE", arr => arr.reduce((a, b) => a + b, 0) / arr.length);
+ const ligneMin = statsLigne("MIN", arr => Math.min(...arr));
+ const ligneMax = statsLigne("MAX", arr => Math.max(...arr));
+
+ return "\uFEFF" + [enTete, ...lignes, "", ligneMoy, ligneMin, ligneMax].join("\r\n");
 }
+// Courbe dessinée hors écran puis convertie en PNG (fond noir, comme le site)
 function png(pts, champs, titre) {
  const c = document.createElement("canvas"); c.width = 900; c.height = 400;
  const o = options(titre); o.responsive = false; o.devicePixelRatio = 1;
@@ -228,7 +264,7 @@ async function creerBilan() {
  $("btnBilan").disabled = true; st.className = "st"; st.textContent = "Récupération des données...";
  try {
   const p = new URLSearchParams({ start: d.toISOString(), end: f.toISOString() });
-  if (f - d > 7 * 864e5) p.set("freq", "30m"); else if (f - d > 864e5) p.set("freq", "5m");
+  if (f - d > 7 * 864e5) p.set("freq", "30m"); else if (f - d > 864e5) p.set("freq", "5m");   // au-delà de 24 h : moyennes pour alléger
   const pts = await appelData(p);
   if (!pts.length) return fin("err", "Aucune mesure sur cette plage.");
 
@@ -244,12 +280,14 @@ async function creerBilan() {
   const sujet = `Bilan CAQS du ${d.toLocaleDateString("fr-FR")} au ${f.toLocaleDateString("fr-FR")}`;
   const fichiers = [...await Promise.all(images.map(async i => new File([await (await fetch(i.data)).blob()], i.name, { type: "image/png" }))),
    new File([csv], "donnees_caqs.csv", { type: "text/csv" })];
+  // Téléphone : la feuille de partage joint les 4 fichiers à l'application de messagerie choisie
   if (navigator.canShare && navigator.canShare({ files: fichiers })) {
    try {
     await navigator.share({ files: fichiers, title: sujet, text: `Bilan CAQS pour ${mail}` });
     return fin("ok", `Choisissez votre messagerie : les 4 fichiers sont joints. Saisissez ${mail} comme destinataire.`);
    } catch (e) { if (e.name === "AbortError") return fin("", "Envoi annulé."); }
   }
+  // Ordinateur : un site ne peut pas joindre de fichiers seul. Mail pré-rempli, fichiers à joindre (liens ci-dessus).
   location.href = `mailto:${mail}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent("Bonjour,\n\nCi-joint le bilan CAQS : 3 courbes (PNG) et toutes les données (CSV).\n")}`;
   fin("ok", "Mail pré-rempli ouvert : joignez les 4 fichiers (liens de téléchargement ci-dessus), puis envoyez-le.");
  } catch (e) { fin("err", "Erreur : " + e.message); }
