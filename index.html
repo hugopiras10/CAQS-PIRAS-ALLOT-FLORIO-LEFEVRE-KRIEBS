@@ -205,45 +205,42 @@ document.querySelectorAll("[data-h]").forEach(b => b.onclick = () => plage(+b.da
 plage(24);
 
 function versCsv(pts) {
- const ordrePrioritaire = ["pm1", "pm25", "pm10", "co2", "temp", "hum"];
- const toutesCles = [...new Set(pts.flatMap(p => Object.keys(p)))].filter(k => k !== "time");
- const cles = [
-  ...ordrePrioritaire.filter(k => toutesCles.includes(k)),
-  ...toutesCles.filter(k => !ordrePrioritaire.includes(k))
- ];
+ const colonnesUtiles = ["pm1", "pm25", "pm10", "co2", "temp", "hum"];
+ const presentes = [...new Set(pts.flatMap(p => Object.keys(p)))];
+ const cles = colonnesUtiles.filter(c => presentes.includes(c));
 
- const formaterValeur = (cle, val) => {
-  if (val == null || val === "") return "";
-  const n = Number(val);
-  if (Number.isNaN(n)) return String(val).replace(/;/g, ",");
-  const arrondi = cle === "co2" ? n.toFixed(0) : n.toFixed(1);
-  return arrondi.replace(".", ",");
+ const arrondir = (cle, v) => {
+  if (v == null || v === "" || Number.isNaN(Number(v))) return "";
+  const n = Number(v);
+  const str = (cle === "co2") ? Math.round(n).toString() : n.toFixed(2);
+  return str.replace(".", ",");
  };
 
  const enTete = ["date", "heure", ...cles].join(";");
 
  const lignes = pts.map(p => {
   const dt = parseDate(p.time);
-  const dateStr = dt.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
-  const heureStr = dt.toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const vals = cles.map(k => formaterValeur(k, p[k]));
-  return [dateStr, heureStr, ...vals].join(";");
+  const date = dt.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
+  const heure = dt.toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return [date, heure, ...cles.map(c => arrondir(c, p[c]))].join(";");
  });
 
- const statsLigne = (label, fn) => {
-  const vals = cles.map(k => {
-   const nums = pts.map(p => Number(p[k])).filter(v => !Number.isNaN(v) && p[k] != null);
-   if (!nums.length) return "";
-   return formaterValeur(k, fn(nums));
+ const stat = (label, fn) => {
+  const vals = cles.map(c => {
+   const nums = pts.map(p => Number(p[c])).filter(v => p[c] != null && p[c] !== "" && !Number.isNaN(v));
+   return nums.length ? arrondir(c, fn(nums)) : "";
   });
   return [label, "", ...vals].join(";");
  };
 
- const ligneMoy = statsLigne("MOYENNE", arr => arr.reduce((a, b) => a + b, 0) / arr.length);
- const ligneMin = statsLigne("MIN", arr => Math.min(...arr));
- const ligneMax = statsLigne("MAX", arr => Math.max(...arr));
+ const resume = [
+  "",
+  stat("MOYENNE", a => a.reduce((x, y) => x + y, 0) / a.length),
+  stat("MIN", a => Math.min(...a)),
+  stat("MAX", a => Math.max(...a))
+ ];
 
- return "\uFEFF" + [enTete, ...lignes, "", ligneMoy, ligneMin, ligneMax].join("\r\n");
+ return "\uFEFF" + [enTete, ...lignes, ...resume].join("\r\n");
 }
 // Courbe dessinée hors écran puis convertie en PNG (fond noir, comme le site)
 function png(pts, champs, titre) {
