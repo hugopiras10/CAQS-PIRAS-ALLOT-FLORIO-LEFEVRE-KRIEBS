@@ -168,8 +168,8 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
  <div id="vue-telecharger" class="bilan-vue">
   <div class="carte">
    <h2>Dossiers de données par semaine (Lundi au Dimanche)</h2>
-   <p class="muted">Retrouvez ci-dessous les données regroupées par semaine civile complète (7 jours de lundi à dimanche). Ouvrez un dossier pour télécharger les fichiers <code>donnees_csv_&lt;date&gt;.csv</code> de chaque jour.</p>
-   <div id="listeSemaines" class="archive-list" style="margin-top: 15px;"></div>
+   <p class="muted">Chaque CSV journalier contient les mesures à la minute (jusqu’à 1 440 lignes par jour), pour toutes les grandeurs disponibles. Chaque CSV journalier contient les mesures à la minute (jusqu’à 1 440 lignes par jour), pour les six grandeurs. Les dossiers affichent uniquement les jours où des mesures ont effectivement été enregistrées par la station.</p>
+   <div id="listeSemaines" class="archive-list" style="margin-top: 15px;">Chargement des semaines...</div>
   </div>
  </div>
 
@@ -322,8 +322,8 @@ function statsChamp(pts, cle) {
 }
 
 function versCsv(pts) {
- const presentes = new Set(pts.flatMap(p => Object.keys(p)));
- const cles = COLONNES_CSV.filter(c => presentes.has(c));
+ // Conserver les six grandeurs dans chaque export, même si certaines valeurs sont absentes.
+ const cles = COLONNES_CSV;
  const enTete = ["date", "heure", ...cles].join(";");
  const lignes = pts.map(p => {
   const dt = parseDate(p.time);
@@ -337,71 +337,100 @@ function versCsv(pts) {
  return "\uFEFF" + [enTete, ...lignes, "", ligneStat("MOYENNE", "moy"), ligneStat("MIN", "min"), ligneStat("MAX", "max")].join("\r\n");
 }
 
-async function telechargerJourSpecifique(dateStr) {
+async function verifierEtTelechargerJour(dateStr) {
  const debut = new Date(`${dateStr}T00:00:00`);
  const fin = new Date(debut); fin.setDate(fin.getDate() + 1);
  try {
-  const params = new URLSearchParams({ start: debut.toISOString(), end: fin.toISOString(), freq: "5m" });
+  const params = new URLSearchParams({ start: debut.toISOString(), end: fin.toISOString(), freq: "1m" });
   const pts = await appelData(params);
-  const ptsFiltres = pts.filter(pt => { const t = parseDate(pt.time).getTime(); return t >= debut.getTime() && t < fin.getTime(); });
-  
-  const finalPts = ptsFiltres.length ? ptsFiltres : pts;
-  if (!finalPts.length) { alert(`Aucune donnée disponible pour le ${dateStr}`); return; }
-  
+  // Ne conserver que les mesures appartenant réellement à la journée demandée.
+  const finalPts = pts.filter(pt => {
+   const t = parseDate(pt.time).getTime();
+   return Number.isFinite(t) && t >= debut.getTime() && t < fin.getTime();
+  });
+  if (!finalPts.length) {
+   alert(`Aucune donnée enregistrée pour le ${dateStr}. Fichier non disponible.`);
+   return;
+  }
   telechargerTexte(`donnees_csv_${dateStr}.csv`, versCsv(finalPts));
- } catch(e) { alert("Erreur de téléchargement : " + e.message); }
+ } catch(e) { alert("Erreur lors de la récupération : " + e.message); }
 }
 
+// Génération dynamique : vérifie si chaque jour a des données avant d'afficher son bouton de téléchargement
 async function afficherDossiersSemaines() {
  const conteneur = $("listeSemaines");
  if (!conteneur || conteneur.dataset.genere) return;
- conteneur.innerHTML = "Génération de l'arborescence des semaines civiles...";
+ conteneur.innerHTML = "Vérification des données et génération des dossiers...";
  
  let html = "";
  const aujourdhui = new Date();
- 
- // Trouver le lundi de la semaine en cours
- const jourSemaine = aujourdhui.getDay(); // 0 = Dimanche, 1 = Lundi, etc.
+ const jourSemaine = aujourdhui.getDay();
  const diffVersLundi = aujourdhui.getDate() - jourSemaine + (jourSemaine === 0 ? -6 : 1);
  const dernierLundi = new Date(aujourdhui.setDate(diffVersLundi));
  dernierLundi.setHours(0, 0, 0, 0);
 
- // Générer les 4 dernières semaines civiles (du lundi au dimanche)
  for (let s = 0; s < 4; s++) {
   const debutSemaine = new Date(dernierLundi);
   debutSemaine.setDate(debutSemaine.getDate() - (s * 7));
-  
   const finSemaine = new Date(debutSemaine);
-  finSemaine.setDate(finSemaine.getDate() + 6); // Le dimanche de cette semaine
+  finSemaine.setDate(finSemaine.getDate() + 6);
   
   const idSemaine = `semaine_${s}`;
   const titreSemaine = `Semaine du ${debutSemaine.toLocaleDateString("fr-FR")} au ${finSemaine.toLocaleDateString("fr-FR")}`;
   
-  html += `
-   <div class="semaine-card">
-    <div class="semaine-header">
-     <span>📁 <strong>${titreSemaine}</strong></span>
-     <button type="button" class="s" onclick="toggleSemaine('${idSemaine}')">📂 Ouvrir le dossier (7 jours)</button>
-    </div>
-    <div id="${idSemaine}" class="jours-container">
-  `;
-  
-  // Les 7 jours du lundi au dimanche
+  let joursHtml = "";
+  let joursValidesCount = 0;
+
   for (let j = 0; j < 7; j++) {
    const dJour = new Date(debutSemaine);
    dJour.setDate(dJour.getDate() + j);
+   if (dJour > new Date()) continue; // Ne pas afficher le futur
+
    const dateStr = dateLocaleISO(dJour);
-   const nomJour = dJour.toLocaleDateString("fr-FR", { weekday: 'long', day: 'numeric', month: 'numeric' });
+   const debutJ = new Date(`${dateStr}T00:00:00`);
+   const finJ = new Date(debutJ); finJ.setDate(finJ.getDate() + 1);
+
+   try {
+    const params = new URLSearchParams({ start: debutJ.toISOString(), end: finJ.toISOString(), freq: "1m" });
+    const pts = await appelData(params);
+    const ptsFiltres = pts.filter(pt => {
+     const t = parseDate(pt.time).getTime();
+     return Number.isFinite(t) && t >= debutJ.getTime() && t < finJ.getTime();
+    });
+
+    // Afficher uniquement les jours pour lesquels des mesures de ce jour existent.
+    if (ptsFiltres.length > 0) {
+     joursValidesCount++;
+     const nomJour = dJour.toLocaleDateString("fr-FR", { weekday: 'long', day: 'numeric', month: 'numeric' });
+     joursHtml += `
+      <div class="jour-item">
+       <span>📄 donnees_csv_${dateStr}.csv <span class="muted">(${nomJour})</span></span>
+       <button type="button" class="s" onclick="verifierEtTelechargerJour('${dateStr}')">Télécharger</button>
+      </div>
+     `;
+    }
+   } catch(err) {
+    // Ignore silencieusement les erreurs réseau mineures lors de la vérification
+   }
+  }
+
+  // N'affiche la semaine que si elle contient au moins un fichier valide
+  if (joursValidesCount > 0) {
    html += `
-    <div class="jour-item">
-     <span>📄 donnees_csv_${dateStr}.csv <span class="muted">(${nomJour})</span></span>
-     <button type="button" class="s" onclick="telechargerJourSpecifique('${dateStr}')">Télécharger</button>
+    <div class="semaine-card">
+     <div class="semaine-header">
+      <span>📁 <strong>${titreSemaine}</strong></span>
+      <button type="button" class="s" onclick="toggleSemaine('${idSemaine}')">📂 Ouvrir le dossier (${joursValidesCount} fichiers)</button>
+     </div>
+     <div id="${idSemaine}" class="jours-container">
+      ${joursHtml}
+     </div>
     </div>
    `;
   }
-  html += `</div></div>`;
  }
- conteneur.innerHTML = html;
+
+ conteneur.innerHTML = html || "<p class='muted'>Aucune archive de semaine avec données disponible pour le moment.</p>";
  conteneur.dataset.genere = "true";
 }
 
@@ -420,25 +449,45 @@ document.querySelectorAll("[data-bilan-vue]").forEach(btn => {
  });
 });
 
-function afficherListeArchives() {
+async function afficherListeArchives() {
  const liste = $("listeArchives");
  if (!liste || liste.dataset.genere) return;
+ liste.innerHTML = "Recherche des journées avec mesures...";
+ 
  const hier = new Date(); hier.setDate(hier.getDate() - 1);
  $("dateArchive").max = dateLocaleISO(hier);
  $("dateArchive").value = dateLocaleISO(hier);
- liste.innerHTML = "";
+ 
+ let html = "";
  for (let i = 0; i < 15; i++) {
   const d = new Date(hier); d.setDate(d.getDate() - i);
   const dateStr = dateLocaleISO(d);
-  const ligne = document.createElement("div");
-  ligne.className = "archive-item";
-  ligne.innerHTML = `<span>Bilan du ${d.toLocaleDateString("fr-FR")}</span><button type="button" class="s" onclick="telechargerJourSpecifique('${dateStr}')">Télécharger le CSV</button>`;
-  liste.appendChild(ligne);
+  
+  // Vérification rapide de présence de données
+  try {
+   const debutJ = new Date(`${dateStr}T00:00:00`);
+   const finJ = new Date(debutJ); finJ.setDate(finJ.getDate() + 1);
+   const pts = await appelData(new URLSearchParams({ start: debutJ.toISOString(), end: finJ.toISOString(), freq: "1m" }));
+   const ptsDuJour = pts.filter(pt => {
+    const t = parseDate(pt.time).getTime();
+    return Number.isFinite(t) && t >= debutJ.getTime() && t < finJ.getTime();
+   });
+
+   if (ptsDuJour.length > 0) {
+    html += `
+     <div class="archive-item">
+      <span>Bilan du ${d.toLocaleDateString("fr-FR")}</span>
+      <button type="button" class="s" onclick="verifierEtTelechargerJour('${dateStr}')">Télécharger le CSV</button>
+     </div>
+    `;
+   }
+  } catch(e) {}
  }
+ liste.innerHTML = html || "<p class='muted'>Aucune archive quotidienne disponible.</p>";
  liste.dataset.genere = "true";
 }
 
-$("btnArchiveJour").onclick = () => telechargerJourSpecifique($("dateArchive").value);
+$("btnArchiveJour").onclick = () => verifierEtTelechargerJour($("dateArchive").value);
 
 function png(pts, champs, titre) {
  const c = document.createElement("canvas"); c.width = 900; c.height = 400;
@@ -457,9 +506,12 @@ $("btnBilan").onclick = async () => {
  btnPartager.style.display = "none";
  
  try {
-  const p = new URLSearchParams({ start: d.toISOString(), end: f.toISOString() });
-  if (f - d > 7 * 864e5) p.set("freq", "30m"); else if (f - d > 864e5) p.set("freq", "5m");
-  const pts = await appelData(p);
+  // Exporter les mesures à la minute, sans agrégation à 5 ou 30 minutes.
+  const p = new URLSearchParams({ start: d.toISOString(), end: f.toISOString(), freq: "1m" });
+  const pts = (await appelData(p)).filter(pt => {
+   const t = parseDate(pt.time).getTime();
+   return Number.isFinite(t) && t >= d.getTime() && t <= f.getTime();
+  });
   if (!pts.length) { st.className = "st err"; st.textContent = "Aucune mesure sur cette plage."; return; }
   
   const csvTexte = versCsv(pts);
@@ -481,18 +533,13 @@ $("btnBilan").onclick = async () => {
    <div><p><a href="${csvUrl}" download="donnees_caqs.csv"><b>Télécharger le fichier CSV complet</b></a> (${pts.length} mesures)</p></div>
   `;
 
-  const fichiersPartage = [
-   new File([csvBlob], "donnees_caqs.csv", { type: "text/csv" })
-  ];
-  
   dernierBilanPartage = {
    title: `Bilan CAQS`,
    text: resumeTexte,
-   files: fichiersPartage
+   files: [new File([csvBlob], "donnees_caqs.csv", { type: "text/csv" })]
   };
 
   btnPartager.style.display = "inline-block";
-
   st.className = "st ok"; st.textContent = "Bilan généré avec succès !";
  } catch (e) {
   st.className = "st err"; st.textContent = "Erreur : " + e.message;
