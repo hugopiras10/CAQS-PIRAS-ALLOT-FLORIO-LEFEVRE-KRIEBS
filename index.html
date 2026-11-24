@@ -81,31 +81,25 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
  <div class="hero">
   <span class="badge">BUT Mesures Physiques · IUT Aix-Marseille</span>
   <h1>Projet <span>CAQS</span></h1>
-  <p><strong>CAQS</strong> (Contrôle et Analyse de la Qualité de l'Air par Station connectée) est une station autonome de mesure environnementale conçue pour suivre en continu la qualité de l'air intérieur et extérieur.</p>
-  <p class="muted">Le dispositif combine une chaîne de capteurs physiques pilotée par microcontrôleur, un affichage local en temps réel sur matrice LED et une remontée périodique des données vers le serveur <strong>AirCarto</strong> afin de permettre l'analyse historique, le zoom temporel et l'exportation de bilans complets sur ce tableau de bord.</p>
+  <p><strong>CAQS</strong> (Contrôle et Analyse de la Qualité de l'Air par Station connectée) est une station autonome de mesure environnementale.</p>
  </div>
  <div class="grille">
   <div class="carte">
    <h2><span>●</span> Particules &amp; Météo</h2>
-   <p class="muted">Un capteur optique <strong>NextPM</strong> (liaison Modbus) mesure les concentrations massiques en particules fines <strong>PM1</strong>, <strong>PM2.5</strong> et <strong>PM10</strong> (µg/m³), ainsi que la <strong>température</strong> (°C) et l'<strong>humidité relative</strong> (%).</p>
+   <p class="muted">Capteur optique <strong>NextPM</strong> pour les particules fines et la météo.</p>
   </div>
   <div class="carte">
    <h2><span>●</span> Dioxyde de carbone (CO₂)</h2>
-   <p class="muted">Un capteur infrarouge non dispersif (NDIR) <strong>MH-Z19B</strong> suit la concentration en CO₂ en parties par million (ppm) pour évaluer le confinement et le renouvellement d'air d'un espace.</p>
+   <p class="muted">Capteur infrarouge NDIR <strong>MH-Z19B</strong> pour le suivi du CO₂.</p>
   </div>
   <div class="carte">
    <h2><span>●</span> Affichage LED en direct</h2>
-   <p class="muted">Une matrice LED <strong>64 × 32</strong> affiche les mesures et l'état de connexion de la station avec un code couleur intuitif selon les seuils de qualité de l'air.</p>
+   <p class="muted">Matrice LED <strong>64 × 32</strong> pour l'affichage local et les alertes visuelles.</p>
   </div>
   <div class="carte">
    <h2><span>●</span> Données &amp; Bilans en ligne</h2>
-   <p class="muted">La station transmet régulièrement ses mesures vers le serveur <strong>AirCarto</strong>. Cette interface web permet de visualiser les courbes et d'explorer les tendances.</p>
+   <p class="muted">Transmission vers <strong>AirCarto</strong> pour l'historique et l'exportation.</p>
   </div>
- </div>
- <div class="carte" style="margin-top:14px">
-  <h2>Architecture &amp; <span>Démarche métrologique</span></h2>
-  <p class="muted">Ce projet met en œuvre l'ensemble de la chaîne de mesure : acquisition des signaux, gestion des préchauffages, contrôle de la cohérence et transmission réseau.</p>
-  <p class="note">Station suivie : identifiant matériel <code>5C:01:3B:F1:53:C8</code></p>
  </div>
 </section>
 
@@ -173,8 +167,8 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
  <!-- VUE 2 : TELECHARGER DONNEES (PAR SEMAINE) -->
  <div id="vue-telecharger" class="bilan-vue">
   <div class="carte">
-   <h2>Dossiers de données par semaine</h2>
-   <p class="muted">Retrouvez ci-dessous les données regroupées par semaine (7 fichiers par dossier). Ouvrez un dossier pour télécharger les fichiers <code>donnees_csv_&lt;date&gt;.csv</code> de chaque jour.</p>
+   <h2>Dossiers de données par semaine (Lundi au Dimanche)</h2>
+   <p class="muted">Retrouvez ci-dessous les données regroupées par semaine civile complète (7 jours de lundi à dimanche). Ouvrez un dossier pour télécharger les fichiers <code>donnees_csv_&lt;date&gt;.csv</code> de chaque jour.</p>
    <div id="listeSemaines" class="archive-list" style="margin-top: 15px;"></div>
   </div>
  </div>
@@ -361,16 +355,24 @@ async function telechargerJourSpecifique(dateStr) {
 async function afficherDossiersSemaines() {
  const conteneur = $("listeSemaines");
  if (!conteneur || conteneur.dataset.genere) return;
- conteneur.innerHTML = "Génération de l'arborescence des semaines...";
+ conteneur.innerHTML = "Génération de l'arborescence des semaines civiles...";
  
  let html = "";
- const auj = new Date();
+ const aujourdhui = new Date();
  
+ // Trouver le lundi de la semaine en cours
+ const jourSemaine = aujourdhui.getDay(); // 0 = Dimanche, 1 = Lundi, etc.
+ const diffVersLundi = aujourdhui.getDate() - jourSemaine + (jourSemaine === 0 ? -6 : 1);
+ const dernierLundi = new Date(aujourdhui.setDate(diffVersLundi));
+ dernierLundi.setHours(0, 0, 0, 0);
+
+ // Générer les 4 dernières semaines civiles (du lundi au dimanche)
  for (let s = 0; s < 4; s++) {
-  const finSemaine = new Date(auj);
-  finSemaine.setDate(finSemaine.getDate() - (s * 7));
-  const debutSemaine = new Date(finSemaine);
-  debutSemaine.setDate(debutSemaine.getDate() - 6);
+  const debutSemaine = new Date(dernierLundi);
+  debutSemaine.setDate(debutSemaine.getDate() - (s * 7));
+  
+  const finSemaine = new Date(debutSemaine);
+  finSemaine.setDate(finSemaine.getDate() + 6); // Le dimanche de cette semaine
   
   const idSemaine = `semaine_${s}`;
   const titreSemaine = `Semaine du ${debutSemaine.toLocaleDateString("fr-FR")} au ${finSemaine.toLocaleDateString("fr-FR")}`;
@@ -384,13 +386,15 @@ async function afficherDossiersSemaines() {
     <div id="${idSemaine}" class="jours-container">
   `;
   
+  // Les 7 jours du lundi au dimanche
   for (let j = 0; j < 7; j++) {
-   const dJour = new Date(finSemaine);
-   dJour.setDate(dJour.getDate() - j);
+   const dJour = new Date(debutSemaine);
+   dJour.setDate(dJour.getDate() + j);
    const dateStr = dateLocaleISO(dJour);
+   const nomJour = dJour.toLocaleDateString("fr-FR", { weekday: 'long', day: 'numeric', month: 'numeric' });
    html += `
     <div class="jour-item">
-     <span>📄 donnees_csv_${dateStr}.csv</span>
+     <span>📄 donnees_csv_${dateStr}.csv <span class="muted">(${nomJour})</span></span>
      <button type="button" class="s" onclick="telechargerJourSpecifique('${dateStr}')">Télécharger</button>
     </div>
    `;
