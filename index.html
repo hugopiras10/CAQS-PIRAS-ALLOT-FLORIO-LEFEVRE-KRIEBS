@@ -91,23 +91,15 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
   <p>Projet réalisé par l'équipe du <strong>BUT Mesures Physiques</strong> à l'<strong>IUT d'Aix-Marseille</strong>.</p>
  </div>
  <div class="grille">
-  <div class="carte">
-   <h2>Hugo <span>PIRAS</span></h2>
-  </div>
-  <div class="carte">
-   <h2>Alexis <span>ALLOT-FLORIO</span></h2>
-  </div>
-  <div class="carte">
-   <h2>Mathilde <span>LEFEVRE</span></h2>
-  </div>
-  <div class="carte">
-   <h2>Romain <span>KRIEBS</span></h2>
-  </div>
+  <div class="carte"><h2>Hugo <span>PIRAS</span></h2></div>
+  <div class="carte"><h2>Alexis <span>ALLOT-FLORIO</span></h2></div>
+  <div class="carte"><h2>Mathilde <span>LEFEVRE</span></h2></div>
+  <div class="carte"><h2>Romain <span>KRIEBS</span></h2></div>
  </div>
 </section>
 
 <section id="donnees" class="page">
- <h1>Les <span>données</span></h1>
+ <<h1>Les <span>données</span></h1>
  <p>Période : <select id="periode">
   <option value="-1h">Dernière heure</option><option value="-24h" selected>24 dernières heures</option><option value="-7d">7 derniers jours</option>
  </select></p>
@@ -158,7 +150,7 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
  <div id="vue-telecharger" class="bilan-vue">
   <div class="carte">
    <h2>Dossiers de données par semaine</h2>
-   <p class="muted">Retrouvez ci-dessous les données regroupées par semaine. Ouvrez un dossier pour télécharger les fichiers <code>donnees_csv_&lt;date&gt;.csv</code> de chaque jour.</p>
+   <p class="muted">Retrouvez ci-dessous les données regroupées par semaine (7 fichiers par dossier). Ouvrez un dossier pour télécharger les fichiers <code>donnees_csv_&lt;date&gt;.csv</code> de chaque jour.</p>
    <div id="listeSemaines" class="archive-list" style="margin-top: 15px;"></div>
   </div>
  </div>
@@ -324,174 +316,4 @@ function versCsv(pts) {
   ].join(";");
  });
  const ligneStat = (label, prop) => [label, "", ...cles.map(c => { const st = statsChamp(pts, c); return st ? formaterNombreCsv(c, st[prop]) : ""; })].join(";");
- return "\uFEFF" + [enTete, ...lignes, "", ligneStat("MOYENNE", "moy"), ligneStat("MIN", "min"), ligneStat("MAX", "max")].join("\r\n");
-}
-
-async function telechargerJourSpecifique(dateStr) {
- const debut = new Date(`${dateStr}T00:00:00`);
- const fin = new Date(debut); fin.setDate(fin.getDate() + 1);
- try {
-  const params = new URLSearchParams({ start: debut.toISOString(), end: fin.toISOString(), freq: "5m" });
-  const pts = await appelData(params);
-  const ptsFiltres = pts.filter(pt => { const t = parseDate(pt.time).getTime(); return t >= debut.getTime() && t < fin.getTime(); });
-  
-  const finalPts = ptsFiltres.length ? ptsFiltres : pts;
-  if (!finalPts.length) { alert(`Aucune donnée disponible pour le ${dateStr}`); return; }
-  
-  telechargerTexte(`donnees_csv_${dateStr}.csv`, versCsv(finalPts));
- } catch(e) { alert("Erreur de téléchargement : " + e.message); }
-}
-
-async function afficherDossiersSemaines() {
- const conteneur = $("listeSemaines");
- if (!conteneur || conteneur.dataset.genere) return;
- conteneur.innerHTML = "Génération de l'arborescence des semaines...";
- 
- let html = "";
- const auj = new Date();
- 
- for (let s = 0; s < 4; s++) {
-  const finSemaine = new Date(auj);
-  finSemaine.setDate(finSemaine.getDate() - (s * 7));
-  const debutSemaine = new Date(finSemaine);
-  debutSemaine.setDate(debutSemaine.getDate() - 6);
-  
-  const idSemaine = `semaine_${s}`;
-  const titreSemaine = `Semaine du ${debutSemaine.toLocaleDateString("fr-FR")} au ${finSemaine.toLocaleDateString("fr-FR")}`;
-  
-  html += `
-   <div class="semaine-card">
-    <div class="semaine-header">
-     <span>📁 <strong>${titreSemaine}</strong></span>
-     <button type="button" class="s" onclick="toggleSemaine('${idSemaine}')">📂 Ouvrir le dossier</button>
-    </div>
-    <div id="${idSemaine}" class="jours-container">
-  `;
-  
-  for (let j = 0; j < 7; j++) {
-   const dJour = new Date(finSemaine);
-   dJour.setDate(dJour.getDate() - j);
-   const dateStr = dateLocaleISO(dJour);
-   html += `
-    <div class="jour-item">
-     <span>📄 donnees_csv_${dateStr}.csv</span>
-     <button type="button" class="s" onclick="telechargerJourSpecifique('${dateStr}')">Télécharger</button>
-    </div>
-   `;
-  }
-  html += `</div></div>`;
- }
- conteneur.innerHTML = html;
- conteneur.dataset.genere = "true";
-}
-
-window.toggleSemaine = function(id) {
- const el = $(id);
- if(el) el.classList.toggle("open");
-}
-
-document.querySelectorAll("[data-bilan-vue]").forEach(btn => {
- btn.addEventListener("click", () => {
-  const vue = btn.dataset.bilanVue;
-  document.querySelectorAll("[data-bilan-vue]").forEach(b => b.classList.toggle("active", b === btn));
-  document.querySelectorAll(".bilan-vue").forEach(v => v.classList.toggle("active", v.id === `vue-${vue}`));
-  if (vue === "telecharger") afficherDossiersSemaines();
-  if (vue === "archives") afficherListeArchives();
- });
-});
-
-function afficherListeArchives() {
- const liste = $("listeArchives");
- if (!liste || liste.dataset.genere) return;
- const hier = new Date(); hier.setDate(hier.getDate() - 1);
- $("dateArchive").max = dateLocaleISO(hier);
- $("dateArchive").value = dateLocaleISO(hier);
- liste.innerHTML = "";
- for (let i = 0; i < 15; i++) {
-  const d = new Date(hier); d.setDate(d.getDate() - i);
-  const dateStr = dateLocaleISO(d);
-  const ligne = document.createElement("div");
-  ligne.className = "archive-item";
-  ligne.innerHTML = `<span>Bilan du ${d.toLocaleDateString("fr-FR")}</span><button type="button" class="s" onclick="telechargerJourSpecifique('${dateStr}')">Télécharger le CSV</button>`;
-  liste.appendChild(ligne);
- }
- liste.dataset.genere = "true";
-}
-
-$("btnArchiveJour").onclick = () => telechargerJourSpecifique($("dateArchive").value);
-
-function png(pts, champs, titre) {
- const c = document.createElement("canvas"); c.width = 900; c.height = 400;
- const o = options(titre, false); o.responsive = false; o.devicePixelRatio = 1;
- const fond = { id: "fond", beforeDraw: ch => { ch.ctx.save(); ch.ctx.fillStyle = "#0b0d0c"; ch.ctx.fillRect(0, 0, ch.width, ch.height); ch.ctx.restore(); } };
- const ch = new Chart(c, { type: "line", data: { datasets: courbes(pts, champs) }, options: o, plugins: [fond] });
- const url = c.toDataURL("image/png"); ch.destroy(); return url;
-}
-
-$("btnBilan").onclick = async () => {
- const st = $("stBilan"), boxResume = $("resumeBilan"), btnPartager = $("btnPartager");
- const d = new Date($("dDeb").value), f = new Date($("dFin").value);
- if (isNaN(d) || isNaN(f) || d >= f) { st.className = "st err"; st.textContent = "Plage de temps invalide."; return; }
- st.className = "st"; st.textContent = "Génération en cours...";
- boxResume.style.display = "none";
- btnPartager.style.display = "none";
- 
- try {
-  const p = new URLSearchParams({ start: d.toISOString(), end: f.toISOString() });
-  if (f - d > 7 * 864e5) p.set("freq", "30m"); else if (f - d > 864e5) p.set("freq", "5m");
-  const pts = await appelData(p);
-  if (!pts.length) { st.className = "st err"; st.textContent = "Aucune mesure sur cette plage."; return; }
-  
-  const csvTexte = versCsv(pts);
-  const csvBlob = new Blob([csvTexte], { type: "text/csv;charset=utf-8" });
-  const csvUrl = URL.createObjectURL(csvBlob);
-  
-  const resumeTexte = `Bilan CAQS (${DEVICE_ID})\nPériode : du ${d.toLocaleString("fr-FR")} au ${f.toLocaleString("fr-FR")}\nPoints mesurés : ${pts.length}`;
-  boxResume.textContent = resumeTexte;
-  boxResume.style.display = "block";
-  
-  const img1 = png(pts, ["pm1", "pm25", "pm10"], "Particules");
-  const img2 = png(pts, ["temp", "hum"], "Météo");
-  const img3 = png(pts, ["co2"], "CO2");
-  
-  $("apercu").innerHTML = `
-   <div><img src="${img1}"><p><a href="${img1}" download="particules.png">Télécharger graphique PM</a></p></div>
-   <div><img src="${img2}"><p><a href="${img2}" download="meteo.png">Télécharger graphique Météo</a></p></div>
-   <div><img src="${img3}"><p><a href="${img3}" download="co2.png">Télécharger graphique CO2</a></p></div>
-   <div><p><a href="${csvUrl}" download="donnees_caqs.csv"><b>Télécharger le fichier CSV complet</b></a> (${pts.length} mesures)</p></div>
-  `;
-
-  const fichiersPartage = [
-   new File([csvBlob], "donnees_caqs.csv", { type: "text/csv" })
-  ];
-  
-  dernierBilanPartage = {
-   title: `Bilan CAQS`,
-   text: resumeTexte,
-   files: fichiersPartage
-  };
-
-  if (navigator.canShare && navigator.canShare({ files: fichiersPartage })) {
-   btnPartager.style.display = "inline-block";
-  }
-
-  st.className = "st ok"; st.textContent = "Bilan généré avec succès !";
- } catch (e) {
-  st.className = "st err"; st.textContent = "Erreur : " + e.message;
- }
-};
-
-$("btnPartager").onclick = async () => {
- if (!dernierBilanPartage) return;
- try {
-  await navigator.share(dernierBilanPartage);
- } catch (e) {
-  if (e.name !== "AbortError") console.error("Erreur de partage", e);
- }
-};
-
-route();
-rafraichir();
-</script>
-</body>
-</html>
+ return "\uFEFF" + [enTete, ...lignes, "", ligneStat("MOYENNE", "moy"), ligneStat("MIN", "min"), ligneStat("MAX", "
