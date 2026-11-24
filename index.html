@@ -46,7 +46,7 @@ button.s:hover{background:#323d36}
 .archive-item{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--n);border:1px solid var(--g2);border-radius:8px;padding:10px 12px}
 .archive-item span{color:var(--t)}
 
-/* Styles spécifiques pour l'arborescence des semaines */
+/* Styles arborescence semaines */
 .semaine-card { background: var(--n); border: 1px solid var(--g2); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
 .semaine-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .jours-container { margin-top: 10px; padding-left: 15px; border-left: 2px solid var(--g2); display: none; }
@@ -64,6 +64,8 @@ button.s:hover{background:#323d36}
 #apercu a{color:var(--v)}
 #apercu img{width:100%;border-radius:8px;border:1px solid var(--g2)}
 #resumeBilan{margin-top:12px;padding:12px 14px;background:var(--n);border:1px solid var(--g2);border-radius:8px;font-size:.88rem;white-space:pre-line;display:none}
+#btnPartager { display: none; margin-top: 12px; background: #3b82f6; color: #fff; }
+#btnPartager:hover { background: #2563eb; }
 footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
 </style>
 </head>
@@ -79,24 +81,28 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
  <div class="hero">
   <span class="badge">BUT Mesures Physiques · IUT Aix-Marseille</span>
   <h1>Projet <span>CAQS</span></h1>
-  <p><strong>CAQS</strong> (Contrôle et Analyse de la Qualité de l'Air par Station connectée) est une station autonome de mesure environnementale conçue pour suivre en continu la qualité de l'air intérieur et extérieur.</p>
- </div>
- <div class="grille">
-  <div class="carte">
-   <h2><span>●</span> Particules &amp; Météo</h2>
-   <p class="muted">Capteur optique <strong>NextPM</strong> et mesures météo associées.</p>
-  </div>
-  <div class="carte">
-   <h2><span>●</span> Dioxyde de carbone (CO₂)</h2>
-   <p class="muted">Capteur NDIR <strong>MH-Z19B</strong> pour le suivi du CO₂.</p>
-  </div>
+  <p><strong>CAQS</strong> (Contrôle et Analyse de la Qualité de l'Air par Station connectée) est une station autonome de mesure environnementale.</p>
  </div>
 </section>
 
 <section id="nous" class="page">
  <div class="hero">
   <h1>Qui <span>sommes-nous</span> ?</h1>
-  <p>Projet réalisé par <strong>Hugo PIRAS</strong>, <strong>Alexis ALLOT-FLORIO</strong>, <strong>Mathilde LEFEVRE</strong> et <strong>Romain KRIEBS</strong> (BUT Mesures Physiques, IUT d'Aix-Marseille).</p>
+  <p>Projet réalisé par l'équipe du <strong>BUT Mesures Physiques</strong> à l'<strong>IUT d'Aix-Marseille</strong>.</p>
+ </div>
+ <div class="grille">
+  <div class="carte">
+   <h2>Hugo <span>PIRAS</span></h2>
+  </div>
+  <div class="carte">
+   <h2>Alexis <span>ALLOT-FLORIO</span></h2>
+  </div>
+  <div class="carte">
+   <h2>Mathilde <span>LEFEVRE</span></h2>
+  </div>
+  <div class="carte">
+   <h2>Romain <span>KRIEBS</span></h2>
+  </div>
  </div>
 </section>
 
@@ -140,7 +146,9 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
     <div><label class="l">Fin</label><input type="datetime-local" id="dFin"></div>
    </div>
    <p><button class="s" data-h="1">1 h</button> <button class="s" data-h="24">24 h</button> <button class="s" data-h="168">7 jours</button> <button class="s" data-h="720">30 jours</button></p>
-   <br><button id="btnBilan">Générer le bilan</button><p id="stBilan" class="st"></p>
+   <br><button id="btnBilan">Générer le bilan</button>
+   <button id="btnPartager">📤 Partager le bilan</button>
+   <p id="stBilan" class="st"></p>
    <div id="resumeBilan"></div>
    <div id="apercu"></div>
   </div>
@@ -150,7 +158,7 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
  <div id="vue-telecharger" class="bilan-vue">
   <div class="carte">
    <h2>Dossiers de données par semaine</h2>
-   <p class="muted">Retrouvez ci-dessous les données regroupées par semaine. Vous pouvez soit télécharger l'ensemble de la semaine, soit ouvrir le dossier pour télécharger les fichiers individuels <code>donnees_csv_&lt;date&gt;.csv</code> de chaque jour.</p>
+   <p class="muted">Retrouvez ci-dessous les données regroupées par semaine. Ouvrez un dossier pour télécharger les fichiers <code>donnees_csv_&lt;date&gt;.csv</code> de chaque jour.</p>
    <div id="listeSemaines" class="archive-list" style="margin-top: 15px;"></div>
   </div>
  </div>
@@ -187,6 +195,7 @@ Chart.defaults.borderColor = "rgba(255,255,255,.08)";
 const $ = id => document.getElementById(id);
 const graphes = {};
 let points = [];
+let dernierBilanPartage = null;
 
 function route() {
  const h = (location.hash || "#projet").slice(1);
@@ -308,7 +317,11 @@ function versCsv(pts) {
  const enTete = ["date", "heure", ...cles].join(";");
  const lignes = pts.map(p => {
   const dt = parseDate(p.time);
-  return [dt.toLocaleDateString("fr-FR"), dt.toLocaleTimeString("fr-FR"), ...cles.map(c => formaterNombreCsv(c, p[c]))].join(";");
+  return [
+   dt.toLocaleDateString("fr-FR"), 
+   dt.toLocaleTimeString("fr-FR"), 
+   ...cles.map(c => formaterNombreCsv(c, p[c]))
+  ].join(";");
  });
  const ligneStat = (label, prop) => [label, "", ...cles.map(c => { const st = statsChamp(pts, c); return st ? formaterNombreCsv(c, st[prop]) : ""; })].join(";");
  return "\uFEFF" + [enTete, ...lignes, "", ligneStat("MOYENNE", "moy"), ligneStat("MIN", "min"), ligneStat("MAX", "max")].join("\r\n");
@@ -318,14 +331,17 @@ async function telechargerJourSpecifique(dateStr) {
  const debut = new Date(`${dateStr}T00:00:00`);
  const fin = new Date(debut); fin.setDate(fin.getDate() + 1);
  try {
-  const pts = (await appelData(new URLSearchParams({ start: debut.toISOString(), end: fin.toISOString() })))
-   .filter(pt => { const t = parseDate(pt.time).getTime(); return t >= debut.getTime() && t < fin.getTime(); });
-  if (!pts.length) { alert(`Aucune donnée pour le ${dateStr}`); return; }
-  telechargerTexte(`donnees_csv_${dateStr}.csv`, versCsv(pts));
+  const params = new URLSearchParams({ start: debut.toISOString(), end: fin.toISOString(), freq: "5m" });
+  const pts = await appelData(params);
+  const ptsFiltres = pts.filter(pt => { const t = parseDate(pt.time).getTime(); return t >= debut.getTime() && t < fin.getTime(); });
+  
+  const finalPts = ptsFiltres.length ? ptsFiltres : pts;
+  if (!finalPts.length) { alert(`Aucune donnée disponible pour le ${dateStr}`); return; }
+  
+  telechargerTexte(`donnees_csv_${dateStr}.csv`, versCsv(finalPts));
  } catch(e) { alert("Erreur de téléchargement : " + e.message); }
 }
 
-// Génération de la vue par Semaine
 async function afficherDossiersSemaines() {
  const conteneur = $("listeSemaines");
  if (!conteneur || conteneur.dataset.genere) return;
@@ -334,7 +350,6 @@ async function afficherDossiersSemaines() {
  let html = "";
  const auj = new Date();
  
- // On génère les 4 dernières semaines par exemple
  for (let s = 0; s < 4; s++) {
   const finSemaine = new Date(auj);
   finSemaine.setDate(finSemaine.getDate() - (s * 7));
@@ -348,14 +363,11 @@ async function afficherDossiersSemaines() {
    <div class="semaine-card">
     <div class="semaine-header">
      <span>📁 <strong>${titreSemaine}</strong></span>
-     <div style="display:flex;gap:6px">
-      <button type="button" class="s" onclick="toggleSemaine('${idSemaine}')">📂 Ouvrir le dossier</button>
-     </div>
+     <button type="button" class="s" onclick="toggleSemaine('${idSemaine}')">📂 Ouvrir le dossier</button>
     </div>
     <div id="${idSemaine}" class="jours-container">
   `;
   
-  // Les 7 jours de la semaine
   for (let j = 0; j < 7; j++) {
    const dJour = new Date(finSemaine);
    dJour.setDate(dJour.getDate() - j);
@@ -378,13 +390,12 @@ window.toggleSemaine = function(id) {
  if(el) el.classList.toggle("open");
 }
 
-// Gestion des onglets du bilan
 document.querySelectorAll("[data-bilan-vue]").forEach(btn => {
  btn.addEventListener("click", () => {
   const vue = btn.dataset.bilanVue;
   document.querySelectorAll("[data-bilan-vue]").forEach(b => b.classList.toggle("active", b === btn));
   document.querySelectorAll(".bilan-vue").forEach(v => v.classList.toggle("active", v.id === `vue-${vue}`));
-  if (vue === "telecharger") afficherDessersSemaines();
+  if (vue === "telecharger") afficherDossiersSemaines();
   if (vue === "archives") afficherListeArchives();
  });
 });
@@ -418,20 +429,25 @@ function png(pts, champs, titre) {
 }
 
 $("btnBilan").onclick = async () => {
- const st = $("stBilan"), boxResume = $("resumeBilan");
+ const st = $("stBilan"), boxResume = $("resumeBilan"), btnPartager = $("btnPartager");
  const d = new Date($("dDeb").value), f = new Date($("dFin").value);
  if (isNaN(d) || isNaN(f) || d >= f) { st.className = "st err"; st.textContent = "Plage de temps invalide."; return; }
  st.className = "st"; st.textContent = "Génération en cours...";
  boxResume.style.display = "none";
+ btnPartager.style.display = "none";
+ 
  try {
-  const pts = await appelData(new URLSearchParams({ start: d.toISOString(), end: f.toISOString() }));
+  const p = new URLSearchParams({ start: d.toISOString(), end: f.toISOString() });
+  if (f - d > 7 * 864e5) p.set("freq", "30m"); else if (f - d > 864e5) p.set("freq", "5m");
+  const pts = await appelData(p);
   if (!pts.length) { st.className = "st err"; st.textContent = "Aucune mesure sur cette plage."; return; }
   
   const csvTexte = versCsv(pts);
   const csvBlob = new Blob([csvTexte], { type: "text/csv;charset=utf-8" });
   const csvUrl = URL.createObjectURL(csvBlob);
   
-  boxResume.textContent = `Période du ${d.toLocaleString("fr-FR")} au ${f.toLocaleString("fr-FR")}\nTotal points : ${pts.length}`;
+  const resumeTexte = `Bilan CAQS (${DEVICE_ID})\nPériode : du ${d.toLocaleString("fr-FR")} au ${f.toLocaleString("fr-FR")}\nPoints mesurés : ${pts.length}`;
+  boxResume.textContent = resumeTexte;
   boxResume.style.display = "block";
   
   const img1 = png(pts, ["pm1", "pm25", "pm10"], "Particules");
@@ -444,9 +460,33 @@ $("btnBilan").onclick = async () => {
    <div><img src="${img3}"><p><a href="${img3}" download="co2.png">Télécharger graphique CO2</a></p></div>
    <div><p><a href="${csvUrl}" download="donnees_caqs.csv"><b>Télécharger le fichier CSV complet</b></a> (${pts.length} mesures)</p></div>
   `;
+
+  const fichiersPartage = [
+   new File([csvBlob], "donnees_caqs.csv", { type: "text/csv" })
+  ];
+  
+  dernierBilanPartage = {
+   title: `Bilan CAQS`,
+   text: resumeTexte,
+   files: fichiersPartage
+  };
+
+  if (navigator.canShare && navigator.canShare({ files: fichiersPartage })) {
+   btnPartager.style.display = "inline-block";
+  }
+
   st.className = "st ok"; st.textContent = "Bilan généré avec succès !";
  } catch (e) {
   st.className = "st err"; st.textContent = "Erreur : " + e.message;
+ }
+};
+
+$("btnPartager").onclick = async () => {
+ if (!dernierBilanPartage) return;
+ try {
+  await navigator.share(dernierBilanPartage);
+ } catch (e) {
+  if (e.name !== "AbortError") console.error("Erreur de partage", e);
  }
 };
 
