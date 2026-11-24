@@ -8,7 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{--n:#0b0d0c;--g:#171c19;--g2:#252d28;--v:#22c55e;--vf:#15803d;--t:#e7efe9;--m:#8fa396}
 *{box-sizing:border-box}
@@ -47,6 +46,13 @@ button.s:hover{background:#323d36}
 .archive-item{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--n);border:1px solid var(--g2);border-radius:8px;padding:10px 12px}
 .archive-item span{color:var(--t)}
 
+/* Styles spécifiques pour l'arborescence des semaines */
+.semaine-card { background: var(--n); border: 1px solid var(--g2); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+.semaine-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.jours-container { margin-top: 10px; padding-left: 15px; border-left: 2px solid var(--g2); display: none; }
+.jours-container.open { display: grid; gap: 6px; }
+.jour-item { display: flex; justify-content: space-between; align-items: center; background: var(--g); padding: 8px 12px; border-radius: 6px; }
+
 .ligne{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.ligne>div{flex:1;min-width:180px}
 #valeurs{display:flex;flex-wrap:wrap;gap:28px}
 .valeur{color:var(--m);font-size:.9rem}.valeur b{display:block;font-size:1.9rem;color:var(--v)}
@@ -74,142 +80,104 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
   <span class="badge">BUT Mesures Physiques · IUT Aix-Marseille</span>
   <h1>Projet <span>CAQS</span></h1>
   <p><strong>CAQS</strong> (Contrôle et Analyse de la Qualité de l'Air par Station connectée) est une station autonome de mesure environnementale conçue pour suivre en continu la qualité de l'air intérieur et extérieur.</p>
-  <p class="muted">Le dispositif combine une chaîne de capteurs physiques pilotée par microcontrôleur, un affichage local en temps réel sur matrice LED et une remontée périodique des données vers le serveur <strong>AirCarto</strong> afin de permettre l'analyse historique, le zoom temporel et l'exportation de bilans complets sur ce tableau de bord.</p>
  </div>
  <div class="grille">
   <div class="carte">
    <h2><span>●</span> Particules &amp; Météo</h2>
-   <p class="muted">Un capteur optique <strong>NextPM</strong> (liaison Modbus) mesure les concentrations massiques en particules fines <strong>PM1</strong>, <strong>PM2.5</strong> et <strong>PM10</strong> (µg/m³), ainsi que la <strong>température</strong> (°C) et l'<strong>humidité relative</strong> (%).</p>
+   <p class="muted">Capteur optique <strong>NextPM</strong> et mesures météo associées.</p>
   </div>
   <div class="carte">
    <h2><span>●</span> Dioxyde de carbone (CO₂)</h2>
-   <p class="muted">Un capteur infrarouge non dispersif (NDIR) <strong>MH-Z19B</strong> suit la concentration en CO₂ en parties par million (ppm) pour évaluer le confinement et le renouvellement d'air d'un espace.</p>
+   <p class="muted">Capteur NDIR <strong>MH-Z19B</strong> pour le suivi du CO₂.</p>
   </div>
-  <div class="carte">
-   <h2><span>●</span> Affichage LED en direct</h2>
-   <p class="muted">Une matrice LED <strong>64 × 32</strong> affiche les mesures et l'état de connexion de la station avec un code couleur intuitif (vert, orange ou rouge) selon les seuils de qualité de l'air.</p>
-  </div>
-  <div class="carte">
-   <h2><span>●</span> Données &amp; Bilans en ligne</h2>
-   <p class="muted">La station transmet régulièrement ses mesures vers le serveur <strong>AirCarto</strong>. Cette interface web permet de visualiser les courbes interactives, d'explorer les tendances et de générer des bilans (PNG + CSV).</p>
-  </div>
- </div>
- <div class="carte">
-  <h2>Architecture &amp; <span>Démarche métrologique</span></h2>
-  <p class="muted">Ce projet met en œuvre l'ensemble de la chaîne de mesure : acquisition des signaux numériques et série, gestion des temps de préchauffage des capteurs, contrôle de la cohérence des mesures, transmission réseau et exploitation des séries temporelles.</p>
-  <p class="note">Station suivie : identifiant matériel <code>5C:01:3B:F1:53:C8</code> · Données transmises à l'API AirCarto.</p>
  </div>
 </section>
+
 <section id="nous" class="page">
  <div class="hero">
   <h1>Qui <span>sommes-nous</span> ?</h1>
-  <p>Projet réalisé par <strong>Hugo PIRAS</strong>, <strong>Alexis ALLOT-FLORIO</strong>, <strong>Mathilde LEFEVRE</strong> et <strong>Romain KRIEBS</strong>, étudiants en <strong>BUT Mesures Physiques</strong> à l'<strong>IUT d'Aix-Marseille</strong>.</p>
-  <p class="muted">Notre équipe a collaboré sur la conception matérielle, l'intégration des capteurs, la programmation embarquée, la visualisation des données et l'exploitation métrologique de la station CAQS.</p>
- </div>
- <div class="grille">
-  <div class="carte">
-   <h2>Hugo <span>PIRAS</span></h2>
-   <p class="muted">Membre de l'équipe projet CAQS (BUT Mesures Physiques, IUT Aix-Marseille). Participation à la conception de la station, aux tests des capteurs et au développement du système.</p>
-  </div>
-  <div class="carte">
-   <h2>Alexis <span>ALLOT-FLORIO</span></h2>
-   <p class="muted">Membre de l'équipe projet CAQS (BUT Mesures Physiques, IUT Aix-Marseille). Contribution à l'intégration électronique, à la communication des données et à la validation des mesures.</p>
-  </div>
-  <div class="carte">
-   <h2>Mathilde <span>LEFEVRE</span></h2>
-   <p class="muted">Membre de l'équipe projet CAQS (BUT Mesures Physiques, IUT Aix-Marseille). Implication dans l'acquisition des mesures, l'analyse des données et la structuration des bilans.</p>
-  </div>
-  <div class="carte">
-   <h2>Romain <span>KRIEBS</span></h2>
-   <p class="muted">Membre de l'équipe projet CAQS (BUT Mesures Physiques, IUT Aix-Marseille). Participation à la mise en œuvre logicielle, à l'interface de visualisation et aux essais de fonctionnement.</p>
-  </div>
+  <p>Projet réalisé par <strong>Hugo PIRAS</strong>, <strong>Alexis ALLOT-FLORIO</strong>, <strong>Mathilde LEFEVRE</strong> et <strong>Romain KRIEBS</strong> (BUT Mesures Physiques, IUT d'Aix-Marseille).</p>
  </div>
 </section>
+
 <section id="donnees" class="page">
  <h1>Les <span>données</span></h1>
  <p>Période : <select id="periode">
   <option value="-1h">Dernière heure</option><option value="-24h" selected>24 dernières heures</option><option value="-7d">7 derniers jours</option>
- </select> <span class="muted" style="font-size:.85rem;margin-left:8px">Molette ou sélection pour zoomer · Glisser pour déplacer</span></p>
+ </select></p>
  <p id="etat">Chargement en cours...</p>
  <div class="carte"><h2>Dernière mesure</h2><div id="valeurs">En attente des données...</div></div>
  <div class="carte">
-  <div class="barre-carte">
-   <h2>Particules (µg/m³)</h2>
-   <button class="s" data-reset="g-pm">Réinitialiser le zoom</button>
-  </div>
+  <div class="barre-carte"><h2>Particules (µg/m³)</h2><button class="s" data-reset="g-pm">Réinitialiser le zoom</button></div>
   <div class="filtres"><label><input type="checkbox" class="f-pm" value="pm1" checked>PM1</label><label><input type="checkbox" class="f-pm" value="pm25" checked>PM2.5</label><label><input type="checkbox" class="f-pm" value="pm10" checked>PM10</label></div>
   <canvas id="g-pm"></canvas>
  </div>
  <div class="carte">
-  <div class="barre-carte">
-   <h2>Température (°C) et humidité (%)</h2>
-   <button class="s" data-reset="g-me">Réinitialiser le zoom</button>
-  </div>
+  <div class="barre-carte"><h2>Température (°C) et humidité (%)</h2><button class="s" data-reset="g-me">Réinitialiser le zoom</button></div>
   <div class="filtres"><label><input type="checkbox" class="f-me" value="temp" checked>Température</label><label><input type="checkbox" class="f-me" value="hum" checked>Humidité</label></div>
   <canvas id="g-me"></canvas>
  </div>
  <div class="carte">
-  <div class="barre-carte">
-   <h2>CO₂ (ppm)</h2>
-   <button class="s" data-reset="g-co2">Réinitialiser le zoom</button>
-  </div>
+  <div class="barre-carte"><h2>CO₂ (ppm)</h2><button class="s" data-reset="g-co2">Réinitialiser le zoom</button></div>
   <canvas id="g-co2"></canvas>
  </div>
 </section>
+
 <section id="bilan" class="page">
  <h1>Le <span>bilan</span></h1>
  <div class="bilan-tabs">
-  <button type="button" class="s active" data-bilan-vue="resume">Résumé</button>
+  <button type="button" class="s active" data-bilan-vue="resume">Résumé &amp; Graphiques</button>
+  <button type="button" class="s" data-bilan-vue="telecharger">Télécharger Données (Par Semaine)</button>
   <button type="button" class="s" data-bilan-vue="archives">Archives CSV quotidiennes</button>
  </div>
+
+ <!-- VUE 1 : RESUME -->
  <div id="vue-resume" class="bilan-vue active">
-  <div class="carte"><h2>Envoyer un bilan par e-mail</h2>
-   <p class="muted">Choisissez une plage de temps : le site génère un résumé statistique, 3 graphiques PNG (particules, météo, CO₂) et un CSV téléchargeable. L'e-mail contient le résumé uniquement afin de respecter la limite de taille d'EmailJS.</p>
+  <div class="carte"><h2>Générer un résumé visuel et CSV</h2>
+   <p class="muted">Choisissez une plage de temps pour afficher le résumé statistique et télécharger les graphiques ou le fichier CSV correspondant.</p>
    <div class="ligne">
     <div><label class="l">Début</label><input type="datetime-local" id="dDeb"></div>
     <div><label class="l">Fin</label><input type="datetime-local" id="dFin"></div>
    </div>
    <p><button class="s" data-h="1">1 h</button> <button class="s" data-h="24">24 h</button> <button class="s" data-h="168">7 jours</button> <button class="s" data-h="720">30 jours</button></p>
-   <label class="l">Adresse e-mail du destinataire</label><input type="email" id="mail" placeholder="nom@exemple.fr">
-   <br><br><button id="btnBilan">Envoyer le bilan par e-mail</button><p id="stBilan" class="st"></p>
+   <br><button id="btnBilan">Générer le bilan</button><p id="stBilan" class="st"></p>
    <div id="resumeBilan"></div>
    <div id="apercu"></div>
   </div>
  </div>
+
+ <!-- VUE 2 : TELECHARGER DONNEES (PAR SEMAINE) -->
+ <div id="vue-telecharger" class="bilan-vue">
+  <div class="carte">
+   <h2>Dossiers de données par semaine</h2>
+   <p class="muted">Retrouvez ci-dessous les données regroupées par semaine. Vous pouvez soit télécharger l'ensemble de la semaine, soit ouvrir le dossier pour télécharger les fichiers individuels <code>donnees_csv_&lt;date&gt;.csv</code> de chaque jour.</p>
+   <div id="listeSemaines" class="archive-list" style="margin-top: 15px;"></div>
+  </div>
+ </div>
+
+ <!-- VUE 3 : ARCHIVES QUOTIDIENNES -->
  <div id="vue-archives" class="bilan-vue">
   <div class="carte">
    <h2>Archives CSV quotidiennes</h2>
-   <p class="muted">Un fichier par journée complète, de 00:00 inclus à 00:00 le lendemain exclu. Chaque CSV contient toutes les mesures disponibles pour cette journée et les statistiques MOYENNE, MIN et MAX.</p>
    <div class="ligne">
     <div><label class="l" for="dateArchive">Choisir une journée</label><input type="date" id="dateArchive"></div>
     <div style="display:flex;align-items:flex-end"><button type="button" id="btnArchiveJour">Télécharger le CSV du jour</button></div>
    </div>
    <p id="stArchive" class="st"></p>
    <h2 style="margin-top:18px">Dernières journées disponibles</h2>
-   <p class="muted">Sélectionnez une date pour récupérer son fichier <code>bilan_csv_du_date.csv</code>.</p>
    <div id="listeArchives" class="archive-list"></div>
   </div>
  </div>
 </section>
 </main>
 <footer>CAQS · Projet réalisé par Hugo PIRAS, Alexis ALLOT-FLORIO, Mathilde LEFEVRE et Romain KRIEBS · IUT Aix-Marseille</footer>
+
 <script>
-// ---------- RÉGLAGES ----------
-const CLE = "1fdf17de86d313e5f49e03ab36f0360b";                          // Clé de groupe AirCarto (32 caractères)
+const CLE = "1fdf17de86d313e5f49e03ab36f0360b"; 
 const DEVICE_ID = "5C:01:3B:F1:53:C8";
 const MOYENNE = { "-24h": "1m", "-7d": "5m" };
 
-// Envoi direct optionnel via EmailJS (laisser vide pour utiliser le partage mobile / mailto + téléchargement)
-const EMAILJS_PUBLIC_KEY  = "HBYTiogOqXPPEZ2Ql";
-const EMAILJS_SERVICE_ID  = "service_ko44wuq";
-const EMAILJS_TEMPLATE_ID = "template_yopk3ed";
-
-if (EMAILJS_PUBLIC_KEY && window.emailjs) {
- emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-}
-if (window.Chart && window.ChartZoom) {
- Chart.register(window.ChartZoom);
-}
+if (window.Chart && window.ChartZoom) { Chart.register(window.ChartZoom); }
 const CHAMPS = {
  pm1:["PM1","µg/m³","#22c55e"], pm25:["PM2.5","µg/m³","#f59e0b"], pm10:["PM10","µg/m³","#ef4444"],
  temp:["Température","°C","#f97316"], hum:["Humidité","%","#38bdf8"], co2:["CO₂","ppm","#a3e635"],
@@ -219,7 +187,7 @@ Chart.defaults.borderColor = "rgba(255,255,255,.08)";
 const $ = id => document.getElementById(id);
 const graphes = {};
 let points = [];
-// ---------- Navigation ----------
+
 function route() {
  const h = (location.hash || "#projet").slice(1);
  const p = ["projet","nous","donnees","bilan"].includes(h) ? h : "projet";
@@ -228,13 +196,14 @@ function route() {
  if (p === "donnees") dessinerTout();
 }
 addEventListener("hashchange", route);
-// ---------- Données ----------
+
 function parseDate(t) {
  if (typeof t === "number") return new Date(t * 1000);
  if (typeof t === "string" && t.trim() !== "" && !isNaN(t)) return new Date(Number(t) * 1000);
  return new Date(t);
 }
 const coches = c => [...document.querySelectorAll("." + c + ":checked")].map(x => x.value);
+
 async function appelData(params) {
  if (CLE) params.set("key", CLE);
  if (DEVICE_ID) params.set("device_id", DEVICE_ID);
@@ -244,61 +213,43 @@ async function appelData(params) {
  if (!j.ok) throw new Error(j.message || "Erreur renvoyée par l'API");
  return (j.points || []).sort((a, b) => parseDate(a.time) - parseDate(b.time));
 }
+
 function options(titre, interactif = true) {
  return {
-  responsive: true,
-  animation: false,
+  responsive: true, animation: false,
   interaction: { mode: "index", intersect: false },
   plugins: {
    ...(titre ? { title: { display: true, text: titre, color: "#e7efe9" } } : {}),
-   ...(interactif ? {
-    zoom: {
-     pan: { enabled: true, mode: "x", modifierKey: null },
-     zoom: {
-      wheel: { enabled: true },
-      pinch: { enabled: true },
-      drag: { enabled: true, backgroundColor: "rgba(34,197,94,0.15)", borderColor: "#22c55e", borderWidth: 1 },
-      mode: "x"
-     }
-    }
-   } : {})
+   ...(interactif ? { zoom: { pan: { enabled: true, mode: "x" }, zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "x" } } } : {})
   },
-  scales: {
-   x: {
-    type: "time",
-    time: { tooltipFormat: "dd/MM/yyyy HH:mm:ss", displayFormats: { minute: "HH:mm", hour: "dd/MM HH:mm", day: "dd/MM" } },
-    ticks: { maxTicksLimit: 8, autoSkip: true }
-   }
-  }
+  scales: { x: { type: "time", time: { tooltipFormat: "dd/MM/yyyy HH:mm:ss" }, ticks: { maxTicksLimit: 8 } } }
  };
 }
+
 function courbes(pts, champs) {
  return champs.map(c => ({
-  label: CHAMPS[c][0],
-  borderColor: CHAMPS[c][2],
-  backgroundColor: CHAMPS[c][2],
+  label: CHAMPS[c][0], borderColor: CHAMPS[c][2], backgroundColor: CHAMPS[c][2],
   data: pts.map(p => ({ x: parseDate(p.time), y: p[c] ?? null })),
-  pointRadius: pts.length < 30 ? 4 : 2,
-  borderWidth: 2,
-  spanGaps: true
+  pointRadius: pts.length < 30 ? 4 : 2, borderWidth: 2, spanGaps: true
  }));
 }
+
 function graphe(id, pts, champs) {
  if (graphes[id]) graphes[id].destroy();
  graphes[id] = new Chart($(id), { type: "line", data: { datasets: courbes(pts, champs) }, options: options("", true) });
 }
+
 document.querySelectorAll("[data-reset]").forEach(btn => {
- btn.onclick = () => {
-  const g = graphes[btn.dataset.reset];
-  if (g && typeof g.resetZoom === "function") g.resetZoom();
- };
+ btn.onclick = () => { const g = graphes[btn.dataset.reset]; if (g && typeof g.resetZoom === "function") g.resetZoom(); };
 });
+
 function dessinerTout() {
  if (!points.length || !$("donnees").classList.contains("on")) return;
  graphe("g-pm", points, coches("f-pm"));
  graphe("g-me", points, coches("f-me"));
  graphe("g-co2", points, ["co2"]);
 }
+
 function afficherDerniere() {
  if (!points.length) return;
  const d = points[points.length - 1], sel = [...coches("f-pm"), ...coches("f-me"), "co2"];
@@ -306,178 +257,158 @@ function afficherDerniere() {
   `<div class="valeur">${CHAMPS[c][0]}<b>${Number(d[c]).toFixed(c === "co2" ? 0 : 1)} ${CHAMPS[c][1]}</b></div>`);
  $("valeurs").innerHTML = h.length ? h.join("") : "Aucun champ sélectionné";
 }
+
 async function rafraichir() {
  const per = $("periode").value, p = new URLSearchParams({ start: per });
  if (MOYENNE[per]) p.set("freq", MOYENNE[per]);
  try {
   points = await appelData(p);
-  if (!points.length) { $("etat").className = ""; $("etat").textContent = "Aucune mesure sur cette période."; $("valeurs").textContent = "Aucune donnée disponible"; return; }
+  if (!points.length) { $("etat").textContent = "Aucune mesure."; return; }
   afficherDerniere(); dessinerTout();
-  const date = parseDate(points[points.length - 1].time).toLocaleString("fr-FR", { timeZone: "Europe/Paris" });
-  $("etat").className = ""; $("etat").textContent = `${points.length} points. Dernière mesure : ${date}.`;
- } catch (e) { $("etat").className = "err"; $("etat").textContent = "Erreur de chargement : " + e.message; }
+  $("etat").textContent = `${points.length} points mesurés.`;
+ } catch (e) { $("etat").className = "err"; $("etat").textContent = "Erreur : " + e.message; }
 }
 $("periode").onchange = rafraichir;
-document.querySelectorAll("input[type=checkbox]").forEach(c => c.onchange = () => { dessinerTout(); afficherDerniere(); });
-// ---------- Bilan par e-mail ----------
+
 const locale = d => new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
 function plage(heures) { const f = new Date(); $("dFin").value = locale(f); $("dDeb").value = locale(new Date(f - heures * 36e5)); }
 document.querySelectorAll("[data-h]").forEach(b => b.onclick = () => plage(+b.dataset.h));
-
 plage(24);
 
-// ---------- Archives CSV quotidiennes ----------
 function dateLocaleISO(date) {
- const y = date.getFullYear();
- const m = String(date.getMonth() + 1).padStart(2, "0");
- const j = String(date.getDate()).padStart(2, "0");
- return `${y}-${m}-${j}`;
+ return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
-function debutJournee(dateStr) {
- // Pour des journées à minuit heure française, le navigateur doit être réglé sur Europe/Paris.
- return new Date(`${dateStr}T00:00:00`);
-}
-function telechargerTexte(nom, contenu, type = "text/csv;charset=utf-8") {
- const blob = new Blob([contenu], { type });
+
+function telechargerTexte(nom, contenu) {
+ const blob = new Blob([contenu], { type: "text/csv;charset=utf-8" });
  const url = URL.createObjectURL(blob);
  const a = document.createElement("a");
- a.href = url;
- a.download = nom;
- document.body.appendChild(a);
- a.click();
- a.remove();
+ a.href = url; a.download = nom;
+ document.body.appendChild(a); a.click(); a.remove();
  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-async function telechargerArchiveJour(dateStr, statut = $("stArchive")) {
- if (!dateStr) {
-  statut.className = "st err";
-  statut.textContent = "Choisissez une date.";
-  return;
- }
- const debut = debutJournee(dateStr);
- const fin = new Date(debut);
- fin.setDate(fin.getDate() + 1);
- statut.className = "st";
- statut.textContent = `Récupération des mesures du ${dateStr}...`;
- try {
-  const params = new URLSearchParams({ start: debut.toISOString(), end: fin.toISOString() });
-  const ptsBruts = await appelData(params);
-  const pts = ptsBruts.filter(pt => {
-   const t = parseDate(pt.time).getTime();
-   return t >= debut.getTime() && t < fin.getTime();
-  });
-  if (!pts.length) {
-   statut.className = "st err";
-   statut.textContent = `Aucune mesure disponible pour le ${dateStr}.`;
-   return;
-  }
-  const csv = versCsv(pts);
-  const nom = `bilan_csv_du_${dateStr}.csv`;
-  telechargerTexte(nom, csv);
-  statut.className = "st ok";
-  statut.textContent = `${nom} téléchargé (${pts.length} mesures, de 00:00 à 00:00).`;
- } catch (e) {
-  statut.className = "st err";
-  statut.textContent = "Erreur lors de la récupération : " + (e && e.message ? e.message : String(e));
- }
-}
-function afficherListeArchives() {
- const liste = $("listeArchives");
- if (!liste) return;
- const hier = new Date();
- hier.setDate(hier.getDate() - 1);
- const maxDate = dateLocaleISO(hier);
- $("dateArchive").max = maxDate;
- if (!$("dateArchive").value) $("dateArchive").value = maxDate;
- liste.innerHTML = "";
- for (let i = 0; i < 30; i++) {
-  const d = new Date(hier);
-  d.setDate(d.getDate() - i);
-  const dateStr = dateLocaleISO(d);
-  const ligne = document.createElement("div");
-  ligne.className = "archive-item";
-  const label = document.createElement("span");
-  label.textContent = `Bilan du ${d.toLocaleDateString("fr-FR")}`;
-  const bouton = document.createElement("button");
-  bouton.type = "button";
-  bouton.className = "s";
-  bouton.textContent = "Télécharger le CSV";
-  bouton.addEventListener("click", () => telechargerArchiveJour(dateStr));
-  ligne.append(label, bouton);
-  liste.appendChild(ligne);
- }
-}
-document.querySelectorAll("[data-bilan-vue]").forEach(btn => {
- btn.addEventListener("click", () => {
-  const vue = btn.dataset.bilanVue;
-  document.querySelectorAll("[data-bilan-vue]").forEach(b => b.classList.toggle("active", b === btn));
-  document.querySelectorAll(".bilan-vue").forEach(v => v.classList.toggle("active", v.id === `vue-${vue}`));
-  if (vue === "archives") afficherListeArchives();
- });
-});
-$("btnArchiveJour").addEventListener("click", () => telechargerArchiveJour($("dateArchive").value));
 
 const COLONNES_CSV = ["pm1", "pm25", "pm10", "co2", "temp", "hum"];
 function formaterNombreCsv(cle, val) {
  if (val == null || val === "") return "";
  const n = Number(val);
  if (Number.isNaN(n)) return String(val).replace(/;/g, ",");
- const texte = cle === "co2" ? Math.round(n).toString() : n.toFixed(2);
- return texte.replace(".", ",");
+ return (cle === "co2" ? Math.round(n).toString() : n.toFixed(2)).replace(".", ",");
 }
+
 function statsChamp(pts, cle) {
-  const nums = pts
-    .map(p => p[cle])
-    .filter(v => v != null && v !== "" && !Number.isNaN(Number(v)))
-    .map(Number);
-  if (!nums.length) return null;
-  return {
-    moy: nums.reduce((a, b) => a + b, 0) / nums.length,
-    min: Math.min(...nums),
-    max: Math.max(...nums)
-  };
+ const nums = pts.map(p => p[cle]).filter(v => v != null && v !== "" && !Number.isNaN(Number(v))).map(Number);
+ if (!nums.length) return null;
+ return { moy: nums.reduce((a, b) => a + b, 0) / nums.length, min: Math.min(...nums), max: Math.max(...nums) };
 }
+
 function versCsv(pts) {
  const presentes = new Set(pts.flatMap(p => Object.keys(p)));
  const cles = COLONNES_CSV.filter(c => presentes.has(c));
  const enTete = ["date", "heure", ...cles].join(";");
  const lignes = pts.map(p => {
   const dt = parseDate(p.time);
-  const dateStr = dt.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
-  const heureStr = dt.toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  return [dateStr, heureStr, ...cles.map(c => formaterNombreCsv(c, p[c]))].join(";");
+  return [dt.toLocaleDateString("fr-FR"), dt.toLocaleTimeString("fr-FR"), ...cles.map(c => formaterNombreCsv(c, p[c]))].join(";");
  });
- const ligneStat = (label, prop) => {
-  const vals = cles.map(c => {
-   const st = statsChamp(pts, c);
-   return st ? formaterNombreCsv(c, st[prop]) : "";
-  });
-  return [label, "", ...vals].join(";");
- };
- return "\uFEFF" + [
-  enTete,
-  ...lignes,
-  "",
-  ligneStat("MOYENNE", "moy"),
-  ligneStat("MIN", "min"),
-  ligneStat("MAX", "max")
- ].join("\r\n");
+ const ligneStat = (label, prop) => [label, "", ...cles.map(c => { const st = statsChamp(pts, c); return st ? formaterNombreCsv(c, st[prop]) : ""; })].join(";");
+ return "\uFEFF" + [enTete, ...lignes, "", ligneStat("MOYENNE", "moy"), ligneStat("MIN", "min"), ligneStat("MAX", "max")].join("\r\n");
 }
-function construireResumeTexte(pts, d, f) {
- const lignes = [
-  `Bilan CAQS (${DEVICE_ID})`,
-  `Période : du ${d.toLocaleString("fr-FR", { timeZone: "Europe/Paris" })} au ${f.toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}`,
-  `Nombre de mesures : ${pts.length}`
- ];
- for (const c of COLONNES_CSV) {
-  const st = statsChamp(pts, c);
-  if (!st) continue;
-  const unite = CHAMPS[c] ? CHAMPS[c][1] : "";
-  const libelle = CHAMPS[c] ? CHAMPS[c][0] : c;
-  lignes.push(`• ${libelle} : moy ${formaterNombreCsv(c, st.moy)} ${unite} (min ${formaterNombreCsv(c, st.min)} / max ${formaterNombreCsv(c, st.max)})`);
+
+async function telechargerJourSpecifique(dateStr) {
+ const debut = new Date(`${dateStr}T00:00:00`);
+ const fin = new Date(debut); fin.setDate(fin.getDate() + 1);
+ try {
+  const pts = (await appelData(new URLSearchParams({ start: debut.toISOString(), end: fin.toISOString() })))
+   .filter(pt => { const t = parseDate(pt.time).getTime(); return t >= debut.getTime() && t < fin.getTime(); });
+  if (!pts.length) { alert(`Aucune donnée pour le ${dateStr}`); return; }
+  telechargerTexte(`donnees_csv_${dateStr}.csv`, versCsv(pts));
+ } catch(e) { alert("Erreur de téléchargement : " + e.message); }
+}
+
+// Génération de la vue par Semaine
+async function afficherDossiersSemaines() {
+ const conteneur = $("listeSemaines");
+ if (!conteneur || conteneur.dataset.genere) return;
+ conteneur.innerHTML = "Génération de l'arborescence des semaines...";
+ 
+ let html = "";
+ const auj = new Date();
+ 
+ // On génère les 4 dernières semaines par exemple
+ for (let s = 0; s < 4; s++) {
+  const finSemaine = new Date(auj);
+  finSemaine.setDate(finSemaine.getDate() - (s * 7));
+  const debutSemaine = new Date(finSemaine);
+  debutSemaine.setDate(debutSemaine.getDate() - 6);
+  
+  const idSemaine = `semaine_${s}`;
+  const titreSemaine = `Semaine du ${debutSemaine.toLocaleDateString("fr-FR")} au ${finSemaine.toLocaleDateString("fr-FR")}`;
+  
+  html += `
+   <div class="semaine-card">
+    <div class="semaine-header">
+     <span>📁 <strong>${titreSemaine}</strong></span>
+     <div style="display:flex;gap:6px">
+      <button type="button" class="s" onclick="toggleSemaine('${idSemaine}')">📂 Ouvrir le dossier</button>
+     </div>
+    </div>
+    <div id="${idSemaine}" class="jours-container">
+  `;
+  
+  // Les 7 jours de la semaine
+  for (let j = 0; j < 7; j++) {
+   const dJour = new Date(finSemaine);
+   dJour.setDate(dJour.getDate() - j);
+   const dateStr = dateLocaleISO(dJour);
+   html += `
+    <div class="jour-item">
+     <span>📄 donnees_csv_${dateStr}.csv</span>
+     <button type="button" class="s" onclick="telechargerJourSpecifique('${dateStr}')">Télécharger</button>
+    </div>
+   `;
+  }
+  html += `</div></div>`;
  }
- return lignes.join("\n");
+ conteneur.innerHTML = html;
+ conteneur.dataset.genere = "true";
 }
+
+window.toggleSemaine = function(id) {
+ const el = $(id);
+ if(el) el.classList.toggle("open");
+}
+
+// Gestion des onglets du bilan
+document.querySelectorAll("[data-bilan-vue]").forEach(btn => {
+ btn.addEventListener("click", () => {
+  const vue = btn.dataset.bilanVue;
+  document.querySelectorAll("[data-bilan-vue]").forEach(b => b.classList.toggle("active", b === btn));
+  document.querySelectorAll(".bilan-vue").forEach(v => v.classList.toggle("active", v.id === `vue-${vue}`));
+  if (vue === "telecharger") afficherDessersSemaines();
+  if (vue === "archives") afficherListeArchives();
+ });
+});
+
+function afficherListeArchives() {
+ const liste = $("listeArchives");
+ if (!liste || liste.dataset.genere) return;
+ const hier = new Date(); hier.setDate(hier.getDate() - 1);
+ $("dateArchive").max = dateLocaleISO(hier);
+ $("dateArchive").value = dateLocaleISO(hier);
+ liste.innerHTML = "";
+ for (let i = 0; i < 15; i++) {
+  const d = new Date(hier); d.setDate(d.getDate() - i);
+  const dateStr = dateLocaleISO(d);
+  const ligne = document.createElement("div");
+  ligne.className = "archive-item";
+  ligne.innerHTML = `<span>Bilan du ${d.toLocaleDateString("fr-FR")}</span><button type="button" class="s" onclick="telechargerJourSpecifique('${dateStr}')">Télécharger le CSV</button>`;
+  liste.appendChild(ligne);
+ }
+ liste.dataset.genere = "true";
+}
+
+$("btnArchiveJour").onclick = () => telechargerJourSpecifique($("dateArchive").value);
+
 function png(pts, champs, titre) {
  const c = document.createElement("canvas"); c.width = 900; c.height = 400;
  const o = options(titre, false); o.responsive = false; o.devicePixelRatio = 1;
@@ -485,66 +416,42 @@ function png(pts, champs, titre) {
  const ch = new Chart(c, { type: "line", data: { datasets: courbes(pts, champs) }, options: o, plugins: [fond] });
  const url = c.toDataURL("image/png"); ch.destroy(); return url;
 }
-async function creerBilan() {
- const st = $("stBilan"), mail = $("mail").value.trim(), boxResume = $("resumeBilan");
+
+$("btnBilan").onclick = async () => {
+ const st = $("stBilan"), boxResume = $("resumeBilan");
  const d = new Date($("dDeb").value), f = new Date($("dFin").value);
- const fin = (cls, t) => { st.className = "st " + cls; st.textContent = t; $("btnBilan").disabled = false; };
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return fin("err", "Adresse e-mail invalide.");
- if (isNaN(d) || isNaN(f) || d >= f) return fin("err", "Plage de temps invalide : le début doit précéder la fin.");
-  if (f - d > 31 * 864e5) return fin("err", "La plage ne peut pas dépasser 31 jours.");
- $("btnBilan").disabled = true; st.className = "st"; st.textContent = "Récupération des données...";
+ if (isNaN(d) || isNaN(f) || d >= f) { st.className = "st err"; st.textContent = "Plage de temps invalide."; return; }
+ st.className = "st"; st.textContent = "Génération en cours...";
  boxResume.style.display = "none";
  try {
-  const p = new URLSearchParams({ start: d.toISOString(), end: f.toISOString() });
-  if (f - d > 7 * 864e5) p.set("freq", "30m"); else if (f - d > 864e5) p.set("freq", "5m");
-  const pts = await appelData(p);
-  if (!pts.length) return fin("err", "Aucune mesure sur cette plage.");
+  const pts = await appelData(new URLSearchParams({ start: d.toISOString(), end: f.toISOString() }));
+  if (!pts.length) { st.className = "st err"; st.textContent = "Aucune mesure sur cette plage."; return; }
+  
   const csvTexte = versCsv(pts);
-  const resumeTexte = construireResumeTexte(pts, d, f);
-  boxResume.textContent = resumeTexte;
+  const csvBlob = new Blob([csvTexte], { type: "text/csv;charset=utf-8" });
+  const csvUrl = URL.createObjectURL(csvBlob);
+  
+  boxResume.textContent = `Période du ${d.toLocaleString("fr-FR")} au ${f.toLocaleString("fr-FR")}\nTotal points : ${pts.length}`;
   boxResume.style.display = "block";
-  const images = [
-   { name: "courbe_particules.png", data: png(pts, ["pm1", "pm25", "pm10"], "Particules (µg/m³)") },
-   { name: "courbe_meteo.png", data: png(pts, ["temp", "hum"], "Température (°C) et humidité (%)") },
-   { name: "courbe_co2.png", data: png(pts, ["co2"], "CO₂ (ppm)") },
-  ];
-  const csv = new Blob([csvTexte], { type: "text/csv;charset=utf-8" });
-  const csvUrl = URL.createObjectURL(csv);
-  $("apercu").innerHTML = images.map(i => `<div><img src="${i.data}" alt="${i.name}"><p><a href="${i.data}" download="${i.name}">Télécharger ${i.name}</a></p></div>`).join("")
-   + `<div><p><a href="${csvUrl}" download="donnees_caqs.csv"><b>Télécharger le fichier CSV</b></a> (${pts.length} mesures)</p></div>`;
-  const sujet = `Bilan CAQS du ${d.toLocaleDateString("fr-FR")} au ${f.toLocaleDateString("fr-FR")}`;
-  if (EMAILJS_PUBLIC_KEY && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && window.emailjs) {
-   st.textContent = "Envoi direct de l'e-mail en cours...";
-   // EmailJS limite la taille totale des variables du modèle à 50 Ko.
-// On envoie uniquement le résumé : le CSV complet reste téléchargeable sur la page.
-   await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-    to_email: mail,
-    sujet: sujet,
-    resume: resumeTexte
-   });
-   return fin("ok", `Bilan envoyé à ${mail}. Le résumé est dans l'e-mail ; les 3 graphiques PNG et le CSV complet sont téléchargeables sur cette page.`);
-  }
-  const fichiers = [...await Promise.all(images.map(async i => new File([await (await fetch(i.data)).blob()], i.name, { type: "image/png" }))),
-   new File([csv], "donnees_caqs.csv", { type: "text/csv" })];
-  if (navigator.canShare && navigator.canShare({ files: fichiers })) {
-   try {
-    await navigator.share({ files: fichiers, title: sujet, text: `${resumeTexte}\n\nDestinataire : ${mail}` });
-    return fin("ok", `Partage prêt : joignez/envoyez vers ${mail} (les fichiers sont aussi téléchargeables ci-dessous).`);
-   } catch (e) { if (e.name === "AbortError") return fin("", "Envoi annulé."); }
-  }
-  const corps = `Bonjour,\n\n${resumeTexte}\n\nLes 3 courbes (PNG) et le fichier CSV sont disponibles au téléchargement sur la page du bilan.\n`;
-  location.href = `mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
-  fin("ok", "Brouillon e-mail ouvert : téléchargez les fichiers ci-dessus pour les joindre si besoin.");
+  
+  const img1 = png(pts, ["pm1", "pm25", "pm10"], "Particules");
+  const img2 = png(pts, ["temp", "hum"], "Météo");
+  const img3 = png(pts, ["co2"], "CO2");
+  
+  $("apercu").innerHTML = `
+   <div><img src="${img1}"><p><a href="${img1}" download="particules.png">Télécharger graphique PM</a></p></div>
+   <div><img src="${img2}"><p><a href="${img2}" download="meteo.png">Télécharger graphique Météo</a></p></div>
+   <div><img src="${img3}"><p><a href="${img3}" download="co2.png">Télécharger graphique CO2</a></p></div>
+   <div><p><a href="${csvUrl}" download="donnees_caqs.csv"><b>Télécharger le fichier CSV complet</b></a> (${pts.length} mesures)</p></div>
+  `;
+  st.className = "st ok"; st.textContent = "Bilan généré avec succès !";
  } catch (e) {
-  console.error("Erreur lors de la création du bilan :", e);
-  const detail = e?.text || e?.message || (typeof e === "string" ? e : JSON.stringify(e));
-  fin("err", "Erreur : " + (detail && detail !== "{}" ? detail : "erreur inconnue. Consultez la console du navigateur (F12)."));
-}
-}
-$("btnBilan").onclick = creerBilan;
+  st.className = "st err"; st.textContent = "Erreur : " + e.message;
+ }
+};
+
 route();
 rafraichir();
-setInterval(() => { if (location.hash === "#donnees") rafraichir(); }, 15000);
 </script>
 </body>
 </html>
