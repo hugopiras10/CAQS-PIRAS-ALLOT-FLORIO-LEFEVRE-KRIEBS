@@ -39,6 +39,14 @@ button.s{background:var(--g2);color:var(--t);padding:6px 12px;font-weight:600}
 button.s:hover{background:#323d36}
 .barre-carte{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .barre-carte h2{margin:0}
+.bilan-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.bilan-tabs button.active{background:var(--v);color:#04130a}
+.bilan-vue{display:none}
+.bilan-vue.active{display:block}
+.archive-list{display:grid;gap:8px;margin-top:14px}
+.archive-item{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--n);border:1px solid var(--g2);border-radius:8px;padding:10px 12px}
+.archive-item span{color:var(--t)}
+
 .ligne{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.ligne>div{flex:1;min-width:180px}
 #valeurs{display:flex;flex-wrap:wrap;gap:28px}
 .valeur{color:var(--m);font-size:.9rem}.valeur b{display:block;font-size:1.9rem;color:var(--v)}
@@ -150,17 +158,37 @@ footer{text-align:center;color:var(--m);font-size:.8rem;padding:24px}
 </section>
 <section id="bilan" class="page">
  <h1>Le <span>bilan</span></h1>
- <div class="carte"><h2>Envoyer un bilan par e-mail</h2>
-  <p class="muted">Choisissez une plage de temps : le site génère un résumé statistique, 3 graphiques PNG (particules, météo, CO₂) et un fichier CSV structuré (<code>date</code>, <code>heure</code>, <code>pm1</code>, <code>pm25</code>, <code>pm10</code>, <code>co2</code>, <code>temp</code>, <code>hum</code> avec 2 décimales et lignes <code>MOYENNE</code>, <code>MIN</code>, <code>MAX</code>). Si EmailJS est configuré, l'e-mail est envoyé directement ; sinon, les fichiers sont téléchargeables et le partage/messagerie s'ouvre automatiquement.</p>
-  <div class="ligne">
-   <div><label class="l">Début</label><input type="datetime-local" id="dDeb"></div>
-   <div><label class="l">Fin</label><input type="datetime-local" id="dFin"></div>
+ <div class="bilan-tabs">
+  <button type="button" class="s active" data-bilan-vue="resume">Résumé</button>
+  <button type="button" class="s" data-bilan-vue="archives">Archives CSV quotidiennes</button>
+ </div>
+ <div id="vue-resume" class="bilan-vue active">
+  <div class="carte"><h2>Envoyer un bilan par e-mail</h2>
+   <p class="muted">Choisissez une plage de temps : le site génère un résumé statistique, 3 graphiques PNG (particules, météo, CO₂) et un CSV téléchargeable. L'e-mail contient le résumé uniquement afin de respecter la limite de taille d'EmailJS.</p>
+   <div class="ligne">
+    <div><label class="l">Début</label><input type="datetime-local" id="dDeb"></div>
+    <div><label class="l">Fin</label><input type="datetime-local" id="dFin"></div>
+   </div>
+   <p><button class="s" data-h="1">1 h</button> <button class="s" data-h="24">24 h</button> <button class="s" data-h="168">7 jours</button> <button class="s" data-h="720">30 jours</button></p>
+   <label class="l">Adresse e-mail du destinataire</label><input type="email" id="mail" placeholder="nom@exemple.fr">
+   <br><br><button id="btnBilan">Envoyer le bilan par e-mail</button><p id="stBilan" class="st"></p>
+   <div id="resumeBilan"></div>
+   <div id="apercu"></div>
   </div>
-  <p><button class="s" data-h="1">1 h</button> <button class="s" data-h="24">24 h</button> <button class="s" data-h="168">7 jours</button> <button class="s" data-h="720">30 jours</button></p>
-  <label class="l">Adresse e-mail du destinataire</label><input type="email" id="mail" placeholder="nom@exemple.fr">
-  <br><br><button id="btnBilan">Envoyer le bilan par e-mail</button><p id="stBilan" class="st"></p>
-  <div id="resumeBilan"></div>
-  <div id="apercu"></div>
+ </div>
+ <div id="vue-archives" class="bilan-vue">
+  <div class="carte">
+   <h2>Archives CSV quotidiennes</h2>
+   <p class="muted">Un fichier par journée complète, de 00:00 inclus à 00:00 le lendemain exclu. Chaque CSV contient toutes les mesures disponibles pour cette journée et les statistiques MOYENNE, MIN et MAX.</p>
+   <div class="ligne">
+    <div><label class="l" for="dateArchive">Choisir une journée</label><input type="date" id="dateArchive"></div>
+    <div style="display:flex;align-items:flex-end"><button type="button" id="btnArchiveJour">Télécharger le CSV du jour</button></div>
+   </div>
+   <p id="stArchive" class="st"></p>
+   <h2 style="margin-top:18px">Dernières journées disponibles</h2>
+   <p class="muted">Sélectionnez une date pour récupérer son fichier <code>bilan_csv_du_date.csv</code>.</p>
+   <div id="listeArchives" class="archive-list"></div>
+  </div>
  </div>
 </section>
 </main>
@@ -295,7 +323,100 @@ document.querySelectorAll("input[type=checkbox]").forEach(c => c.onchange = () =
 const locale = d => new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
 function plage(heures) { const f = new Date(); $("dFin").value = locale(f); $("dDeb").value = locale(new Date(f - heures * 36e5)); }
 document.querySelectorAll("[data-h]").forEach(b => b.onclick = () => plage(+b.dataset.h));
+
 plage(24);
+
+// ---------- Archives CSV quotidiennes ----------
+function dateLocaleISO(date) {
+ const y = date.getFullYear();
+ const m = String(date.getMonth() + 1).padStart(2, "0");
+ const j = String(date.getDate()).padStart(2, "0");
+ return `${y}-${m}-${j}`;
+}
+function debutJournee(dateStr) {
+ // Pour des journées à minuit heure française, le navigateur doit être réglé sur Europe/Paris.
+ return new Date(`${dateStr}T00:00:00`);
+}
+function telechargerTexte(nom, contenu, type = "text/csv;charset=utf-8") {
+ const blob = new Blob([contenu], { type });
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a");
+ a.href = url;
+ a.download = nom;
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function telechargerArchiveJour(dateStr, statut = $("stArchive")) {
+ if (!dateStr) {
+  statut.className = "st err";
+  statut.textContent = "Choisissez une date.";
+  return;
+ }
+ const debut = debutJournee(dateStr);
+ const fin = new Date(debut);
+ fin.setDate(fin.getDate() + 1);
+ statut.className = "st";
+ statut.textContent = `Récupération des mesures du ${dateStr}...`;
+ try {
+  const params = new URLSearchParams({ start: debut.toISOString(), end: fin.toISOString() });
+  const ptsBruts = await appelData(params);
+  const pts = ptsBruts.filter(pt => {
+   const t = parseDate(pt.time).getTime();
+   return t >= debut.getTime() && t < fin.getTime();
+  });
+  if (!pts.length) {
+   statut.className = "st err";
+   statut.textContent = `Aucune mesure disponible pour le ${dateStr}.`;
+   return;
+  }
+  const csv = versCsv(pts);
+  const nom = `bilan_csv_du_${dateStr}.csv`;
+  telechargerTexte(nom, csv);
+  statut.className = "st ok";
+  statut.textContent = `${nom} téléchargé (${pts.length} mesures, de 00:00 à 00:00).`;
+ } catch (e) {
+  statut.className = "st err";
+  statut.textContent = "Erreur lors de la récupération : " + (e && e.message ? e.message : String(e));
+ }
+}
+function afficherListeArchives() {
+ const liste = $("listeArchives");
+ if (!liste) return;
+ const hier = new Date();
+ hier.setDate(hier.getDate() - 1);
+ const maxDate = dateLocaleISO(hier);
+ $("dateArchive").max = maxDate;
+ if (!$("dateArchive").value) $("dateArchive").value = maxDate;
+ liste.innerHTML = "";
+ for (let i = 0; i < 30; i++) {
+  const d = new Date(hier);
+  d.setDate(d.getDate() - i);
+  const dateStr = dateLocaleISO(d);
+  const ligne = document.createElement("div");
+  ligne.className = "archive-item";
+  const label = document.createElement("span");
+  label.textContent = `Bilan du ${d.toLocaleDateString("fr-FR")}`;
+  const bouton = document.createElement("button");
+  bouton.type = "button";
+  bouton.className = "s";
+  bouton.textContent = "Télécharger le CSV";
+  bouton.addEventListener("click", () => telechargerArchiveJour(dateStr));
+  ligne.append(label, bouton);
+  liste.appendChild(ligne);
+ }
+}
+document.querySelectorAll("[data-bilan-vue]").forEach(btn => {
+ btn.addEventListener("click", () => {
+  const vue = btn.dataset.bilanVue;
+  document.querySelectorAll("[data-bilan-vue]").forEach(b => b.classList.toggle("active", b === btn));
+  document.querySelectorAll(".bilan-vue").forEach(v => v.classList.toggle("active", v.id === `vue-${vue}`));
+  if (vue === "archives") afficherListeArchives();
+ });
+});
+$("btnArchiveJour").addEventListener("click", () => telechargerArchiveJour($("dateArchive").value));
+
 const COLONNES_CSV = ["pm1", "pm25", "pm10", "co2", "temp", "hum"];
 function formaterNombreCsv(cle, val) {
  if (val == null || val === "") return "";
@@ -394,13 +515,14 @@ async function creerBilan() {
   const sujet = `Bilan CAQS du ${d.toLocaleDateString("fr-FR")} au ${f.toLocaleDateString("fr-FR")}`;
   if (EMAILJS_PUBLIC_KEY && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && window.emailjs) {
    st.textContent = "Envoi direct de l'e-mail en cours...";
+   // EmailJS limite la taille totale des variables du modèle à 50 Ko.
+// On envoie uniquement le résumé : le CSV complet reste téléchargeable sur la page.
    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
     to_email: mail,
     sujet: sujet,
-    resume: resumeTexte,
-    csv_data: csvTexte
+    resume: resumeTexte
    });
-   return fin("ok", `Bilan envoyé directement à ${mail}. Les graphiques PNG et le CSV restent aussi téléchargeables ci-dessous.`);
+   return fin("ok", `Bilan envoyé à ${mail}. Le résumé est dans l'e-mail ; les 3 graphiques PNG et le CSV complet sont téléchargeables sur cette page.`);
   }
   const fichiers = [...await Promise.all(images.map(async i => new File([await (await fetch(i.data)).blob()], i.name, { type: "image/png" }))),
    new File([csv], "donnees_caqs.csv", { type: "text/csv" })];
