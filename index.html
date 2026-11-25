@@ -254,8 +254,14 @@ function courbes(pts, champs) {
 }
 
 function graphe(id, pts, champs) {
- if (graphes[id]) graphes[id].destroy();
- graphes[id] = new Chart($(id), { type: "line", data: { datasets: courbes(pts, champs) }, options: options("", true) });
+ const datasets = courbes(pts, champs);
+ if (graphes[id]) {
+  // mise à jour sur place : le zoom de l'utilisateur est conservé
+  graphes[id].data.datasets = datasets;
+  graphes[id].update("none");
+  return;
+ }
+ graphes[id] = new Chart($(id), { type: "line", data: { datasets }, options: options("", true) });
 }
 
 document.querySelectorAll("[data-reset]").forEach(btn => {
@@ -284,6 +290,7 @@ async function rafraichir() {
   points = await appelData(p);
   if (!points.length) { $("etat").textContent = "Aucune mesure."; return; }
   afficherDerniere(); dessinerTout();
+  $("etat").className = "";
   $("etat").textContent = `${points.length} points mesurés.`;
  } catch (e) { $("etat").className = "err"; $("etat").textContent = "Erreur : " + e.message; }
 }
@@ -561,6 +568,8 @@ $("btnPartager").onclick = async () => {
 
 route();
 rafraichir();
+// Actualisation automatique toutes les 15 secondes (en pause quand l'onglet est caché)
+setInterval(() => { if (!document.hidden) rafraichir(); }, 15000);
 </script>
 </body>
 </html>
